@@ -2,4 +2,31 @@
 
 \Section{Forráskód beszerzése és fordítás}
 
-% TODO: Ide kerülnének az említett vázlatok.
+A MySQL forráskódból való fordítását egy frissen telepített és naprakészre frissített Manjaro 20.1 es linux disztribúción végeztem el.
+
+A fordítás sikerességéhez rendszerenként eltérő csomagok telepítésére lehet szükség. Jelen esetben a következők telepítéseket igényelte a folyamat.
+% QUEST: Miért snap-es csomaggal lett telepítve?
+\begin{python}
+$ sudo snap install cmake --classic
+$ sudo pacman -S rpcsvc-proto
+\end{python}
+A \textit{Boost} függvénykönyvtár később kapcsoló használatával letölthető.
+
+A kód letölthető a MySQL hivatalos GitHub oldaláról melyet a következő paranccsal lehet végrehajtani:
+\begin{python}
+git clone https://github.com/mysql/mysql-server.git
+\end{python}
+
+Ezek után \textit{CMake} futtása előtt érdemes létrehozni egy mappát ahová az újonnan létrejött fájlok kerülnek majd. Erre a \textit{CMake} figyelmeztet is minket. Ha mégis a forrás állomány mellé szeretnénk fordítani azt a \texttt{-DFORCE\_INSOURCE\_BUILD=1} kapcsoló használatával megtehetjük.
+\begin{python}
+cmake ../ -DDOWNLOAD_BOOST=1 -DWITH_BOOST=../boost/
+\end{python}
+A sikeres futás jelzi, hogy minden készen áll a fordításra, nincs hiányzó csomag. A \texttt{make} parancs futtatása következik. Ez egy hosszú folyamat, jelen konfiguráción 120 percet vett igénybe. A sikeres telepítést követően létre kell hoznunk egy data mappát a szerver számára. Telepített változat esetén melyet a make install parancsal hozhatunk létre szükség lehet a data jogosultságainak beállításaira.
+
+Futtathatjuk a \texttt{./bin/mysqld --initialize} parancsot. Amennyiben sikeres, megkapjuk az ideiglenes jelszót melyet módosíthatunk a szerverre való csatlakozás után. A \texttt{./bin/mysqld} parancs után a szerver el is indul. \texttt{./bin/mysql -u root -p} és a jelszó megadásával fel is csatlakoztunk a szerverre.
+
+A következő parancs használható az adatbázis rendszergazdai jelszavának a megváltoztatására:
+% TODO: SQL-es környezetet lesz majd célszerű használni helyette!
+\begin{python}
+ALTER USER 'root'@'localhost' IDENTIFIED BY 'MyNewPass';
+\end{python}
