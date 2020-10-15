@@ -2,4 +2,21 @@
 
 \Section{Az OpenCL nyelv}
 
-% TODO: Ide elég csak valamilyen minimális, bevezetés jellegű leírás, hogy mi is az. Nem kell túlságosan részletezni. Elég csak hivatkozni.
+Open Computing Language egy keretrendszer amely lehetőséget ad olyan programok írására amelyek különböző platformokon is futtathatóak.
+Az OpenCL meghatároz egy programozási nyelvet az eszközök és API-k számára a platformok vezérléséhez és a számítások végrehajtásához az eszközökön. Szabványos interfészt biztosít a párhuzamos számításokhoz, melyhez adatalapú és feladatalapú párhuzamosítást használ.
+
+Fontos észrevenni, hogy az OpenCL natív módon képes beszélni az eszközök nagy részével, ez nem azt jelenti, hogy a kód optimálisan fog futni. Ugyanis különböző Cl eszközök különböző funkciókkal vannak ellátva. Gyártó specifikus kiterjesztések elkerülésével a kód hordozható lesz, de nem sebesség optimális.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=\textwidth]{images/opencl.png}
+\caption{OpenCL}
+\label{fig:opencl}
+\end{figure}
+
+A következő esetekben a GPU-t érdemes használni.
+\begin{itemize}
+\item Gyors permutáció: Az eszközök gyorsabban mozgatáják a memóriát mint a Host.
+\item Adat átváltás: Egyik formátumról másikra.
+\item Numerikus gyorsítás: Az eszközök gyorsabban számolnak nagyobb adatdarabokkal mint a Host.
+\end{itemize}
