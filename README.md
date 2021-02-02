@@ -9,5 +9,6 @@ A MySQL adatbázismotor egy széles körben használt, relációs adatmodellre �
 ## Linkek
 
 * Google Drive: https://docs.google.com/document/d/1haEA-6dxn8ByKKy7KCq0V2GFEPEoPOlqO0MkxKU8z2c/edit
+* Google Drive2: https://docs.google.com/document/d/1p8mpFUepOxTprBR8SeYQdAJhHNMJp51o6pWJRIRdzno/edit 
 * OpenCL: https://leonardoaraujosantos.gitbook.io/opencl/chapter1
 
