@@ -4,87 +4,19 @@ g++ -D_GLIBCXX_USE_CXX11_ABI=0 komplex1.cpp -o komplex1.out -lOpenCL
 -lmysqlcppconn
 */
 
-#include <CL/cl.h>
-#include <CL/cl.hpp>
-#include <chrono>
-#include <cstddef>
-#include <cstdio>
-#include <iostream>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-
-#include <fstream>
-#include <sstream>
-
-#include "mysql_connection.h"
-
-#include <cppconn/driver.h>
-#include <cppconn/exception.h>
-#include <cppconn/prepared_statement.h>
-#include <cppconn/resultset.h>
-#include <cppconn/statement.h>
-
-#define CL_USE_DEPRECATED_OPENCL_1_2_APIS
-
-#define VECTOR_SIZE3 50000
-#define VECTOR_SIZE2 1000
-#define VECTOR_SIZE1 100
-#define THREADS 500
-
-using namespace std;
-using namespace std::chrono;
-
+#include "komplex1_head.hpp"
+#include "timer_class.hpp"
 // OpenCL kernel which is run for every work item created.
-
-typedef struct {
-  int c1p3;
-  int c2;
-  int c3;
-  int c4;
-  int fk_p1_p3;
-  int fk_p2_p3;
-} Table3Type;
-typedef struct {
-  int c1p2;
-  int c2;
-  int c3;
-  int fk_p1_p2;
-} Table2Type;
-typedef struct {
-  int c1p1;
-  int c2;
-  int c3;
-  int c4;
-} Table1Type;
 
 void load_database(Table3Type *T3, Table2Type *T2);
 int main(void) {
 
-  //---SPEED TEST START---
-  auto start = high_resolution_clock::now();
+  Timer Full_timer;
+  Full_timer.start();
 
-  FILE *fp;
-  fp = fopen("komplex1kernel.cl", "r");
-  if (!fp) {
-    fprintf(stderr, "Error loading kernel.\n");
-    exit(1);
-  }
-  fseek(fp, 0, SEEK_END);
-  size_t kernel_sz = ftell(fp);
-  rewind(fp);
-  char *kernel_str = (char *)malloc(kernel_sz);
-  fread(kernel_str, 1, kernel_sz, fp);
-  fclose(fp);
-
-  //---SPEED TEST STOP---
-  auto stop = high_resolution_clock::now();
-  auto duration = duration_cast<microseconds>(stop - start);
-  cout << "Kernel kod beolvasas: " << duration.count() << " microseconds"
-       << endl;
-
-  //---SPEED TEST START---
-  start = high_resolution_clock::now();
+  size_t kernel_length;
+  string kernel_string;
+  read_kernel_code("komplex1kernel.cl", &kernel_length, &kernel_string);
 
   // Get platform and device information
   cl_platform_id *platforms = NULL;
@@ -114,36 +46,13 @@ int main(void) {
   cl_command_queue command_queue =
       clCreateCommandQueueWithProperties(context, device_list[0], 0, &clStatus);
 
-  //---SPEED TEST STOP---
-  stop = high_resolution_clock::now();
-  duration = duration_cast<microseconds>(stop - start);
-  cout << "eszkoz, platform, kontextus, parancssor: " << duration.count()
-       << " microseconds" << endl;
-
-  //---SPEED TEST START---
-  start = high_resolution_clock::now();
-
   Table3Type *t3 = (Table3Type *)malloc(sizeof(Table3Type) * VECTOR_SIZE3);
   Table2Type *t2 = (Table2Type *)malloc(sizeof(Table2Type) * VECTOR_SIZE2);
-  Table2Type *t1 = (Table1Type *)malloc(sizeof(Table1Type) * VECTOR_SIZE1);
+  Table1Type *t1 = (Table1Type *)malloc(sizeof(Table1Type) * VECTOR_SIZE1);
   Table3Type *tout = (Table3Type *)malloc(sizeof(Table3Type) * VECTOR_SIZE3);
   int *returned_rows = (int *)malloc(sizeof(int) * THREADS);
 
-  //---SPEED TEST STOP---
-  stop = high_resolution_clock::now();
-  duration = duration_cast<microseconds>(stop - start);
-  cout << "C valtozok letrehozasa: " << duration.count() << " microseconds"
-       << endl;
-  //---SPEED TEST START---
-  start = high_resolution_clock::now();
-
   load_database(t3, t2);
-
-  //---SPEED TEST STOP---
-  stop = high_resolution_clock::now();
-  duration = duration_cast<microseconds>(stop - start);
-  cout << "T2, T3 tablak lekerdezese " << duration.count() << " microseconds"
-       << endl;
 
   ////////////
   // Create memory buffers on the device for each vector
@@ -162,64 +71,27 @@ int main(void) {
   cl_mem Returned_Rows_clmem = clCreateBuffer(
       context, CL_MEM_READ_WRITE, THREADS * sizeof(int), NULL, &clStatus);
 
-  //---SPEED TEST START---
-  start = high_resolution_clock::now();
-
   // Copy the Buffer to the device
   clStatus = clEnqueueWriteBuffer(command_queue, Table3_clmem, CL_TRUE, 0,
                                   VECTOR_SIZE3 * sizeof(Table3Type), t3, 0,
                                   NULL, NULL);
 
-  //---SPEED TEST STOP---
-  stop = high_resolution_clock::now();
-  duration = duration_cast<microseconds>(stop - start);
-  cout << "CL memoria bufferek letrehozasa es feltoltese " << duration.count()
-       << " microseconds" << endl;
-
-
   clStatus = clEnqueueWriteBuffer(command_queue, Table2_clmem, CL_TRUE, 0,
                                   VECTOR_SIZE2 * sizeof(Table2Type), t2, 0,
                                   NULL, NULL);
-
-  //---SPEED TEST START---
-  start = high_resolution_clock::now();
 
   ////////////
 
   // Create a program from the kernel source
   cl_program program =
-      clCreateProgramWithSource(context, 1, (const char **)&kernel_str,
-                                (const size_t *)&kernel_sz, &clStatus);
-
-  //---SPEED TEST STOP---
-  stop = high_resolution_clock::now();
-  duration = duration_cast<microseconds>(stop - start);
-  cout << "Kernel kod letrehozasa forrasbol  " << duration.count()
-       << " microseconds" << endl;
-  //---SPEED TEST START---
-  start = high_resolution_clock::now();
+      clCreateProgramWithSource(context, 1, (const char **)&kernel_string,
+                                (const size_t *)&kernel_length, &clStatus);
 
   // Build the program
   clStatus = clBuildProgram(program, 1, device_list, NULL, NULL, NULL);
 
-  //---SPEED TEST STOP---
-  stop = high_resolution_clock::now();
-  duration = duration_cast<microseconds>(stop - start);
-  cout << "Kernel kod felepitese " << duration.count() << " microseconds"
-       << endl;
-  //---SPEED TEST START---
-  start = high_resolution_clock::now();
-
   // Create the OpenCL kernel
   cl_kernel kernel = clCreateKernel(program, "komplex1Kernel", &clStatus);
-
-  //---SPEED TEST STOP---
-  stop = high_resolution_clock::now();
-  duration = duration_cast<microseconds>(stop - start);
-  cout << "Opencl kernel letrehozasa " << duration.count() << " microseconds"
-       << endl;
-  //---SPEED TEST START---
-  start = high_resolution_clock::now();
 
   ///////////
   // Set the arguments of the kernel
@@ -250,15 +122,6 @@ int main(void) {
   // Clean up and wait for all the comands to complete.
   clStatus = clFlush(command_queue);
   clStatus = clFinish(command_queue);
-
-  //---SPEED TEST STOP---
-  stop = high_resolution_clock::now();
-  duration = duration_cast<microseconds>(stop - start);
-  cout << "Argumentum atadas, futtatas, buffekerek "
-          "kiolvasasa, varakozas a befejezesre "
-       << duration.count() << " microseconds" << endl;
-  //---SPEED TEST START---
-  start = high_resolution_clock::now();
 
   int i;
   // Display the result to the screen
@@ -300,6 +163,8 @@ int main(void) {
 
   cout << sum << "\nDone.\n";
 
+  Full_timer.stop();
+  cout << Full_timer.elapsedMicroseconds() << " microseconds\t" << Full_timer.elapsedSeconds() << " seconds" << endl;
   return 0;
 }
 
@@ -360,4 +225,22 @@ void load_database(Table3Type *T3, Table2Type *T2) {
   }
 
   // cout << "Full query completed.\n" << endl;
+}
+
+void read_kernel_code(char const *file, size_t *kernel_length,
+                      string *kernel_string) {
+
+  FILE *fp;
+  fp = fopen(file, "r");
+  if (!fp) {
+    fprintf(stderr, "Error loading kernel.\n");
+    exit(1);
+  }
+  fseek(fp, 0, SEEK_END);
+  *kernel_length = ftell(fp);
+  rewind(fp);
+  char *kernel_str = (char *)malloc(*kernel_length);
+  fread(kernel_str, 1, *kernel_length, fp);
+  fclose(fp);
+  *kernel_string = kernel_str;
 }
