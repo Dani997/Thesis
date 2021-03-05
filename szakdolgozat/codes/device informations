@@ -1,0 +1,50 @@
+1 OpenCL Platforms found
+
+ CL_PLATFORM_NAME:      NVIDIA CUDA
+ CL_PLATFORM_VERSION:   OpenCL 1.2 CUDA 11.2.109
+OpenCL Device Info:
+
+ 1 devices found supporting OpenCL on: NVIDIA CUDA
+
+ ----------------------------------
+ Device GeForce MX250
+ ---------------------------------
+  CL_DEVICE_NAME:                       GeForce MX250
+  CL_DEVICE_VENDOR:                     NVIDIA Corporation
+  CL_DRIVER_VERSION:                    460.32.03
+  CL_DEVICE_TYPE:                       CL_DEVICE_TYPE_GPU
+  CL_DEVICE_MAX_COMPUTE_UNITS:          3
+  CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS:   3
+  CL_DEVICE_MAX_WORK_ITEM_SIZES:        1024 / 1024 / 64 
+  CL_DEVICE_MAX_WORK_GROUP_SIZE:        1024
+  CL_DEVICE_MAX_CLOCK_FREQUENCY:        1582 MHz
+  CL_DEVICE_ADDRESS_BITS:               64
+  CL_DEVICE_MAX_MEM_ALLOC_SIZE:         500 MByte
+  CL_DEVICE_GLOBAL_MEM_SIZE:            2002 MByte
+  CL_DEVICE_ERROR_CORRECTION_SUPPORT:   no
+  CL_DEVICE_LOCAL_MEM_TYPE:             local
+  CL_DEVICE_LOCAL_MEM_SIZE:             48 KByte
+  CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE:   64 KByte
+  CL_DEVICE_QUEUE_PROPERTIES:           CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE
+  CL_DEVICE_QUEUE_PROPERTIES:           CL_QUEUE_PROFILING_ENABLE
+  CL_DEVICE_IMAGE_SUPPORT:              1
+  CL_DEVICE_MAX_READ_IMAGE_ARGS:        256
+  CL_DEVICE_MAX_WRITE_IMAGE_ARGS:       16
+
+  CL_DEVICE_IMAGE <dim>                 2D_MAX_WIDTH     16384
+                                        2D_MAX_HEIGHT    32768
+                                        3D_MAX_WIDTH     16384
+                                        3D_MAX_HEIGHT    16384
+                                        3D_MAX_DEPTH     16384
+  CL_DEVICE_PREFERRED_VECTOR_WIDTH_<t>  CHAR 1, SHORT 1, INT 1, FLOAT 1, DOUBLE 1
+
+
+clDeviceQuery, Platform Name = NVIDIA CUDA, Platform Version = OpenCL 1.2 CUDA 11.2.109, NumDevs = 1, Device = GeForce MX250
+
+System Info: 
+
+ Local Time/Date =  14:53:18, 03/05/2021
+ CPU Name: Intel(R) Core(TM) i5-8265U CPU @ 1.60GHz 
+ # of CPU processors: 8
+ Linux version 5.9.16-1-MANJARO (builduser@LEGION) (gcc (GCC) 10.2.0, GNU ld (GNU Binutils) 2.35.1) #1 SMP PREEMPT Mon Dec 21 22:00:46 UTC 2020
+
