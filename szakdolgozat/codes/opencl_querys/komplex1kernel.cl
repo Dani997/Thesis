@@ -15,7 +15,7 @@ typedef struct {
 
 
 __kernel void komplex1Kernel(                             
-                  __global Table3Type *T1,          
+                  __global Table3Type *T3,          
                   __global Table2Type *T2,          
                   __global Table3Type *B,          
                    __global int *counter)   
@@ -33,9 +33,9 @@ counter[index]=0;
 
       for(j=0; j<50000; j++)
       {
-        if( T1[j].fk_p2_p3 == T2[k].c1p2 & T1[j].c3>=5488)
+        if( T3[j].fk_p2_p3 == T2[k].c1p2 & T3[j].c3>=5488)
         {
-          B[  index + counter[index]*100 ] = T1[j];
+          B[  index + counter[index]*100 ] = T3[j];
           counter[index]+=1;
         }
       }
