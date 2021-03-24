@@ -5,46 +5,42 @@
 A MySQL forráskódból való fordítását egy frissen telepített és naprakészre frissített Manjaro 20.2.1 es linux disztribúción végeztem el. Telepítés során non-free grafikus drivert választottam.
 A forrásállomány könnyedén elérhető a készítő hivatalos GitHub oldaláról, így azt gond nélkül klónoztam.
 \begin{python}
-$ git clone https://github.com/mysql/mysql-server.git
+ git clone https://github.com/mysql/mysql-server.git
 \end{python}
-
-
 A fordítás sikerességéhez rendszerenként eltérő csomagok telepítésére lehet szükség. Jelen esetben a következők telepítéseket igényelte a folyamat.
 % QUEST: Miért snap-es csomaggal lett telepítve?
 % ANSWER: A cmake telepítése a gyártó hivatalos weboldalán található Manjato rendszerhez készült segédlet alapján lett elvégezve.
 \begin{python}
-$ sudo snap install cmake --classic
-$ sudo pacman -S rpcsvc-proto //rpcgen csomagot nem található
-$ sudo pacman -S pkgconfig
-$ sudo pacman -S make
-$ sudo pacman -S gcc
-$ sudo pacman -S bison
-\end{python}
+ $ sudo snap install cmake --classic
+ $ sudo pacman -S rpcsvc-proto
+ $ sudo pacman -S pkgconfig
+ $ sudo pacman -S make
+ $ sudo pacman -S gcc
+ $ sudo pacman -S bison
+\end{python}%$
 %A \textit{Boost} függvénykönyvtár később kapcsoló használatával letölthető.
-
 A következő lépés a CMake futtatása.
 Ehhez létre kell hozni egy mappát ahhová az új állományok létrejöhetnek. Ez a lépés kihagyható, a CMake javasolja az új mappát, de felajánlja a kapcsolót a kihagyásra.
 \begin{python}
-$ mkdir build
+ mkdir build
 \end{python}
 A forrás mappájában futtathatjuk a következő parancsot:
 \begin{python}
-$ cmake ./ ../build -DDOWNLOAD_BOOST=1 -DWITH_BOOST=../boost/
+ cmake ./ ../build -DDOWNLOAD_BOOST=1 -DWITH_BOOST=../boost/
 \end{python}
 A kapcsoló megadásával a boost könyvtár letöltődik a megadott helyre és a CMake megjegyez. Ha a generátor hibátba ütközik a szükséges csomagokat telepíteni kell és a \textit{CMakeCache.txt} fájlt törtölni. Ezek után a CMake újra futtatahtó, de már a \textit{Boost} -hoz tartozó kapcsolók nélkül
 A sikeres futás jelzi, hogy minden készen áll a fordításra, nincs hiányzó csomag.
-
  A \texttt{make} parancs futtatása következik. Ez egy hosszú folyamat, jelen konfiguráción 120 percet vett igénybe. A sikeres fordítást követően létre kell hoznunk egy data mappát a szerver számára.
 \begin{python}
-$ mkdir data
+ mkdir data
 \end{python}
 Első futtatást rendszergazdaként a megadott kapcsolóval kell végrehajtani, csak ekkor tudja a szerver létrehozni a fájljait!
 \begin{python}
-$ sudo ./bin/mysqld --initialize
+ sudo ./bin/mysqld --initialize
 \end{python}
 Ekkor kapunk egy jelszót az a szerverre való csatlakozáshoz. Következő futtatás előtt szükség lehet a data mappa jogosultságainak állítására, különben a szerver a normál indítás során nem tudja inicializálni az InnoDB-t olvasási hiba miatt.
 \begin{python}
-$ sudo chmod -R 777 ./data
+ sudo chmod -R 777 ./data
 \end{python}
 
 Ezután futtathatjuk a szervert
@@ -55,14 +51,11 @@ Vagy telepíthetjük is azt a \texttt{make install} paranccsal, de ez jelen eset
 
 Csatlakozás a szerverre:
 \begin{python}
-$ ./bin/mysql -u root -p
+ ./bin/mysql -u root -p
 \end{python}
 A generált jelszó bemásolásával belépünk. Majd megváltoztatjuk a jelszót.
 \begin{python}
 ALTER USER 'root'@'localhost' IDENTIFIED BY 'uj jelszo';
 \end{python}
 Vagy használhatjuk a MySQL Workbench-et ami első belépéskor megkér minket a módosításra.
-
-
 % TODO: SQL-es környezetet lesz majd célszerű használni helyette!
-
