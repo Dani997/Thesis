@@ -11,7 +11,7 @@ PHP, Perl, Ruby, C+ Wrapper.
 
 \Section{A Connector/C++ használata}
 
-Az alábbi weboldalról letöltött állományokat használtam:
+Az alábbi weboldalról letöltött állományokat használtam:\newline
 https://dev.mysql.com/downloads/connector/cpp/
 \begin{itemize}
 \item Linux - Generic
@@ -29,47 +29,29 @@ CREATE USER 'newuser'@'localhost' IDENTIFIED BY 'password';
 \Section{Első program}
 
 Hozzunk létre egy \texttt{connectortest.cpp} nevű fájlt.
+Szükséges osztályok létrehozása:
 \begin{cpp}
-#include <iostream>
-#include <stdlib.h>
-#include "mysql_connection.h"
-#include <cppconn/driver.h>
-#include <cppconn/exception.h>
-#include <cppconn/prepared_statement.h>
-#include <cppconn/resultset.h>
-#include <cppconn/statement.h>
+sql::Driver *driver;
+sql::Connection *con;
+sql::Statement *stmt;
+sql::ResultSet *res;
+sql::PreparedStatement *pstmt;
 \end{cpp}
-Ezen header állományokat töltöttük le és másoltuk a usr/include mappába.
-
-A teljes kód try catch szerkezetben kell, hogy legyen, így kaphatjuk meg hiba esetén a megfelelő hiba kódokat, üzeneteket.
-
+Csatlakozás a szerverhez és adatbázis kiválasztása:
 \begin{cpp}
-  try {
-    sql::Driver *driver;
-    sql::Connection *con;
-    sql::Statement *stmt;
-    sql::ResultSet *res;
-    sql::PreparedStatement *pstmt;
+driver = get_driver_instance();
+con = driver->connect("tcp://192.168.0.43:3306", "program", "a");
+con->setSchema("thesis");
 \end{cpp}
-
+Utasítás létrehozása SQL parancsból:
 \begin{cpp}
-	driver = get_driver_instance();
-    con = driver->connect("tcp://192.168.0.43:3306", "program", "a");
+pstmt = con->prepareStatement("SELECT * FROM T3");
 \end{cpp}
-driver létrehozása és kapcsolódás az adatbázis szerverhez.
-
+Az utasítás elküldése a szervernek. Ez a sor maga a lekérdezés, itt tudjuk mérni annak idejét is.
 \begin{cpp}
-	con->setSchema("thesis");
+res = pstmt->executeQuery();
 \end{cpp}
-Ahhoz, hogy lekérdezést végezhessük ki kell választani valamelyik sémát.
-\begin{cpp}
-	pstmt = con->prepareStatement("SELECT * FROM T3");
-\end{cpp}
-Létre kell az SQL parancsból a lekérdezés utasítását.
-\begin{cpp}
-	res = pstmt->executeQuery();
-\end{cpp}
-Végül el kell küldeni az utasítást. Ez a sor tér vissza a lekérdezés eredményével.
+Az eredményt a szemléltetett módon lehet kiolvasni:
 \begin{cpp}
  while (res->next())
       cout << res->getInt("c1p3") << "\t" << res->getInt("c2") << "\t"
@@ -77,7 +59,7 @@ Végül el kell küldeni az utasítást. Ez a sor tér vissza a lekérdezés ere
            << res->getInt("fk_p1_p3") << "\t" << res->getInt("fk_p2_p3") 
            << endl;
 \end{cpp}
-Az eredményt a szemléltetett módon lehet kiolvasni. 
+
 
 Lekérdezés után fontos törölni az eredményhalmazt és az elkészített utasítást, ugyanis ezek memóriát foglalnak, és több lekérdezés esetén a lekérdezés halmaz megtöltheti a teljes memóriát is. 
 \begin{cpp}
@@ -85,24 +67,7 @@ Lekérdezés után fontos törölni az eredményhalmazt és az elkészített uta
     delete pstmt;
 \end{cpp}
 
-A catch részt a MySQL készítette, itt nem lesz szükségünk módosításra.
-\begin{cpp}
-  } catch (sql::SQLException &e) {
 
-    cout << "# ERR: SQLException in " << __FILE__;
-    cout << "(" << __FUNCTION__ << ") on line " << __LINE__ << endl;
-
-    cout << "# ERR: " << e.what();
-    cout << " (MySQL error code: " << e.getErrorCode();
-    cout << ", SQLState: " << e.getSQLState() << " )" << endl;
-
-    return EXIT_FAILURE;
-  }
-
-  cout << "Done." << endl;
-  return EXIT_SUCCESS;
-}
-\end{cpp}
 Futtatáshoz és fordításhoz a következő parancsokat használhatjuk: 
 \begin{python}
 g++ -D_GLIBCXX_USE_CXX11_ABI=0 connectortest.cpp -o connectortest.out -lmysqlcppconn
@@ -138,6 +103,54 @@ Elemek feldolgozása: ALU-k magunként.
 
 OpenCL használata mellett szükségtelen gondolkozni azon, hogy pontosan mi is végzi el a számításokat. Ugyanis az OpenCL modelljének illeszkedése egy adott hardverhez, a gyártók feladata.
 
+\begin{table}[h!]
+\centering
+\caption{CPU-k és GPU-k összehasonlítása}
+\medskip
+\label{tab:cpuvsgpu}
+\begin{tabular}{|p{7cm}|p{7cm}|}
+\hline
+Alacsony számítási sűrűség & Magas számítási sűrűség \\
+\hline
+Komplex logikai vezérlő & Magas számítási és memória-hozzáférés \\
+\hline
+Nagy caches &   \\
+\hline
+Optimalizált a soros műveletekre.
+\begin{itemize}
+	\item Kevesebb végrehajtási egység (ALU).
+	\item Magas órajel sebesség.
+\end{itemize} & Beépített párhuzamos műveletek.
+\begin{itemize}
+	\item Sok párhuzamos végrehajtási egység (ALU).
+	\item A grafika a párhuzamosság legismertebb esete.
+\end{itemize} \\
+\hline
+Shallow pipelines <30 stages & Deep pipelines több száz szakasz \\
+\hline
+Alacsony késleltetési tolerancia & Magas áteresztőképesség, Magas áteresztőképesség \\
+\hline
+Az újabb CPU-k több párhuzamosításra képesek & Újabb GPU-k
+\begin{itemize}
+	\item Jobb áramlást vezérlő logika
+	\item Scatter/Gather Memory Access
+	\item Már nem egyirányúak a pipeline-ok
+\end{itemize} \\
+\hline
+\end{tabular}
+\end{table}
+
+\SubSection{Az OpenCL elemei}
+\begin{itemize}
+\item Globális memória: Minden eszközzel meg van osztva, de lassú. A kernel hívások között perzisztens. 
+\item Konstans memória: Gyorsabb a globálisnál, szűrő paraméterek megadására használják.
+\item Lokális memória: Minden számási egység számára privát, de megosztott a feldolgozó elemek között.
+\item Privát memória: Gyorsabb a lokálisnál, minden feldolgozó elemnek van.
+\end{itemize} 
+A konstans, lokális és privát memóriába nem lehet adatokat menteni úgy, hogy más kernel használhassa majd azt
+
+
+
 
 \Section{Az OpenCL telepítése}
 
@@ -152,6 +165,12 @@ $ sudo pacman -S ocl-icd
 \end{python}
 
 \Section{Az OpenCL használata}
+
+\Chapter{Megvalósítás}
+
+\Section{Bevezetés}
+
+Az ötletet egyik legjobban hátráltató dolog az adatbázis elérése. Ahhoz, hogy hozzá férjünk az adatokhoz szükség van a Connectorra, amely egy teljes lekérdezést végezve vissza tér a táblával. Ezen adatokat át kell másolni egy a tábla felépítését reprezentáló strúktúrából álló vektorba.
 
 
 
