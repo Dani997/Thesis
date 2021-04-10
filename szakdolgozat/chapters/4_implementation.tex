@@ -146,7 +146,7 @@ Az újabb CPU-k több párhuzamosításra képesek & Újabb GPU-k
 \begin{figure}[h!]
 \centering
 \includegraphics[width=\textwidth]{images/device.png}
-\caption{OpenCL}
+\caption{OpenCL eszköz modell}
 \label{fig:opencl}
 \end{figure}
 
@@ -161,7 +161,7 @@ A konstans, lokális és privát memóriába nem lehet adatokat menteni úgy, ho
 
 \SubSection{Feldolgozási modell}
 
-A Host -on OpenCL alkalmazások futnak amelyek a számító eszközökhöz küldik a munkát.
+A Host -on OpenCL alkalmazások futnak amelyek a számítási eszközökhöz küldik a munkát.
 \begin{itemize}
 \item Munkaelem: A számítási eszköz alapvető egysége.
 \item Kernel: A kód, ami fut a munkaegységen  (Alap C függvények)
@@ -181,9 +181,9 @@ Amire ehhez szükség van:
 
 Megfeleltetés:
 \begin{itemize}
-\item Munkaelem - számítóelem: Minden munkaelemet egy számítóelem hajt végre.
-\item Munkacsoport - számítóegység: Minden munkacsoportot egy számítóegység hajt végre. A munkacsoport munkaelemek, a számító egység pedig számítóelemek csoportja.
-\item Kernel végrehajtási példány - Számító eszköz. Munkacsoportok összessége illetve számító elemek összessége. 
+\item Munkaelem - számítási elem: Minden munkaelemet egy számítási elem hajt végre.
+\item Munkacsoport - számítási egység: Minden munkacsoportot egy számítási egység hajt végre. A munkacsoport munkaelemek, a számítási egység pedig számítási elemek csoportja.
+\item Kernel végrehajtási példány - Számítási eszköz. Munkacsoportok összessége illetve számítási elemek összessége. 
 \end{itemize}
 
 \SubSection{Munkacsoportok}
@@ -197,7 +197,7 @@ Ideális esetben végtelen számú feldolgozási elemmel rendelkezik az eszköz,
 \end{itemize}
 
 A folytatáshoz a munkacsoportokat ütemezni kell a végrehajtási egységeken, és a munkaelemeket számítási-egységen belül végrehajtani.
-Minden munkaelem társulni fog egy számítási egységhez, ha van elegendő. Ezt a folyamatot az OpenCL végzi, csak meg kell adni a globális munkaméretet és munkacsoport méretet. A kernelt indító függvény a  munkacsoportok számát kiszámolja. Ha nincs elég számító egység, akkor a munkacsoportok sorban hajtódnak végre a meglévő egységeken.
+Minden munkaelem társulni fog egy számítási egységhez, ha van elegendő. Ezt a folyamatot az OpenCL végzi, csak meg kell adni a globális munkaméretet és munkacsoport méretet. A kernelt indító függvény a  munkacsoportok számát kiszámolja. Ha nincs elég számítási egység, akkor a munkacsoportok sorban hajtódnak végre a meglévő egységeken.
 
 \SubSection{OpenCL program általános felépítése}
 \begin{itemize}
@@ -227,10 +227,139 @@ $ sudo pacman -S ocl-icd
 \Section{Az OpenCL használata}
 
 \Chapter{Megvalósítás}
-
 \Section{Bevezetés}
+Az alap ötlet egyszerű. A MySQL szerverről lekérjük a tábla tartalmát, amit be másolunk az OpenCL pufferébe, majd a kernelkód futtatása után az eredményt tartalmazó részeket kiolvassuk. De felvetődik pár problémás rész. Hogyan tároljuk a tábla tartalmát? Mekkora legyen a Globális munkaméret és a munkacsoport méret? Milyen formában állítsuk elő az eredményt, és hogyan olvassuk azt ki?
 
-Az ötletet egyik legjobban hátráltató dolog az adatbázis elérése. Ahhoz, hogy hozzá férjünk az adatokhoz szükség van a Connectorra, amely egy teljes lekérdezést végezve vissza tér a táblával. Ezen adatokat át kell másolni egy a tábla felépítését reprezentáló strúktúrából álló vektorba.
+\SubSection{Táblák tömbbé alakítása}
+Ahhoz, hogy OpenCL el kezelni tudjuk az adatokat először szükség lesz egy struktúrára ami reprezentálja az adatbázis tábla felépítését. Az az a struktúra adattagjainak típusa egyezzen meg a táblázat oszlopainak típusával. Ezek után ebből létre kell hoznunk egy tömböt melynek hossza legalább annyi, mint a tábla sorainak száma.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=10cm]{images/table-struct.png}
+\caption{Adatbázistábla átalakítása tömbbé}
+\label{fig:opencl}
+\end{figure}
+
+\begin{itemize}
+\item A struktúra megfelel a tábla felépítésének.
+\item A tömb egy eleme, egy ilyen struktúra.
+\item A tömb egy eleme megfelel a tábla egy rekordjának azaz sorának.
+\item Egy elem adattagjai megfelelnek az adatbázis egyazon rekordjához tartozó mezőknek.
+\end{itemize}
+
+\newpage
+\SubSection{A táblákat beolvasó függvény.}
+
+A táblák sorainak száma változó lehet, ezért a programot igyekeztem úgy megírni, hogy alkalmazkodjon közel bármilyen táblamérethez.
+Első lépésben létrehozok egy Pointert ami a táblára fog mutatni, és ehhez egy változót ami a méretét tárolja. Az adatbázis lekérő függvénynek átadom ezeket.
+Miután a Connector elvégezte a lekérdezést beállítom a méret változó értékét és a tábla memória területét csak ekkor foglalom le. A kettős indirektségnek köszönhetően a főprogramban lévő *t1 pointer beállítható, hogy a megfelelő címre mutasson, illetve a függvényből feltölthető.
+\begin{cpp}
+Table1Type *t1 = NULL;
+int t1_size;
+load_database(&t1, &t1_size);
+	
+res = pstmt->executeQuery();
+\end{cpp}
+\begin{figure}[h!]
+\centering
+\includegraphics[width=\textwidth]{images/pointer1.png}
+\caption{Pointerek a létrehozáskor}
+\label{fig:opencl}
+\end{figure}
+
+\begin{cpp}
+int i = 0;
+*T1_size = res->rowsCount();
+*T1 = (Table1Type*) malloc(sizeof(Table1Type) * *T1_size);
+
+while (res->next())
+{
+	T1[0][i].c1p1 = res->getInt("c1p1");
+	T1[0][i].c2 = res->getInt("c2");
+	T1[0][i].c3 = res->getInt("c3");
+	T1[0][i].c4 = res->getInt("c4");
+	i++;
+}
+\end{cpp}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=\textwidth]{images/pointer2.png}
+\caption{Pointerek teljes működése}
+\label{fig:opencl}
+\end{figure}
+
+\Section{Globális és lokális méret meghatározása}
+\begin{itemize}
+\item Ennél a pontnál oda kell figyelni pár alapvető dologra.
+\item A globális méret korlátlan.
+\item A lokális méret avagy munkaelemek száma egy munkacsoportban legfeljebb, 1024 lehet.
+\item A lokális méret osztója kell, hogy legyen a globális méretnek.
+\item A túl sok vagy túl kevés munkacsoport használata esetén a párhuzamosság előnye elveszhet.
+\item A munkacsoportok párhuzamosan dolgoznak egymás mellett.
+\item Munkacsoporton belül a munkaelemek feldolgozása párhuzamos.
+\item Munkacsoportok között nincs szinkronizáció, csak munka elemek között, ha egy munkacsoportba tartoznak.
+\item Nem használható kölcsönös kizárás, a szemafor végtelen ciklust okoz.
+\end{itemize}
+
+\SubSection{Alap működés}
+
+Alap esetben a bemeneti elemszámot megadjuk globális méretnek, gyakorlatilag ennyiszer fog lefutni a kernel kód.
+Megadjuk a lokális méretet, ezzel munkacsoportokba bontottuk az elemeket.
+A végeredményt tartalmazó kimeneti vektor hossza egyezik a globális mérettel, így nem ütközhetünk bele abba a hibába, hogy két számítási elem ugyan oda próbáljon írni. Amennyiben például a 545. elem megfelel, akkor az indexe és egyéb hozzá tartozó értékek az 545. helyen lesznek a kimeneti tömbben.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=\textwidth]{images/workgroups.png}
+\caption{Munkacsoportokra bontás}
+\label{fig:opencl}
+\end{figure}
+
+\SubSection{Globális méret meghatározása}
+Tegyünk fel, hogy kaptunk egy 1048547 sorból álló táblázatot.
+Olyan lokális méretet kell megadni, ami ennek osztója, láthatjuk, hogy a meghatározása problémás.
+Erre megoldást jelent ha a lokális méretet előre beállítjuk például 1024 -re, majd a globális méretet ebből és a sorok számából kiszámítjuk.
+Ezt úgy tehetjük meg, hogy a sorok számához hozzáadjuk a legkisebb olyan számot amellyel az összeg oszthatóvá válik a lokális mérettel.
+Így azt kapjuk, hogy a globális méret 1049600, ami azt jelenti, hogy 1025 munkacsoport jön létre. 
+
+Viszont látjuk, hogy a lokális méret korlátai miatt szükség lehet arra, hogy valamilyen egyéb módon csökkentsük a munkacsoportok számát.
+Mondjuk azt, hogy egy munkaegység ne csak egy elemén dolgozzon a tömbnek, hanem egy intervallumán.
+Határozzuk meg a méreteket a következők alapján:
+
+$$ interval\_size = \floor{ \sqrt{table\_size} } $$
+$$global\_size = interval\_size + ( local\_size - (interval\_size\mod(local\_size)) )$$
+
+Ezzel elértük, hogy a munkacsoportok száma drasztikusan csökkenjen. Illetve egy másik fontos előnyre is szert ettünk, ami az eredmények számlálása illetve kiolvasása során lesz jelentős.
+
+\SubSection{A kernelkód működése}
+
+Annak köszönhetően, hogy a tömböt intervallumokra bontottuk az elemeire nézve soros feldolgozási darabok jöttek létre. Ezeken az intervallumokon már 
+használhatunk számlálókat. Ennek az lesz a következménye, hogy nem csak a kimeneti tömböt kell kiolvasni, aminek mérete továbbra is megegyezik a táblázat sorainak számával, de a számlálókat tartalmazó tömböt is.
+De vegyük észre, hogy legfeljebb csak a gyökével nőtt az eredetileg kiolvasandó méret, és a kimeneten pontosan tudjuk, hol vannak az adatok.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=\textwidth]{images/itemgroup.png}
+\caption{Munkacsoportokra bontás}
+\label{fig:opencl}
+\end{figure}
+
+A számítási elemek egy intervallumon dolgoznak és továbbra is munkacsoportokba vannak bontva de ez a működésre nincs hatással, legfeljebb a teljesítményre.
+
+\SubSection{Az elemek kiolvasása}
+Meglehet tenni azt, hogy nem olvassuk ki azonnal a végeredményt tartalmazó tömböt.
+Első lépésben kiolvassuk a számlálókat, ezt végig járva az eredmény tömbből kiolvashatjuk csak azokat a részeket amelyek ténylegesen
+tartalmaznak indexeket. 
+Később látni fogjuk, hogy ez a módszer mégsem olyan hatékony mint első ránézésre gondolnánk.
+
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=\textwidth]{images/kimasol.png}
+\caption{Munkacsoportokra bontás}
+\label{fig:opencl}
+\end{figure}
+
 
 
 
