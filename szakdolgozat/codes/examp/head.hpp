@@ -11,6 +11,9 @@
 
 using namespace std;
 
+#define GPU 1
+#define CPU 0
+
 typedef struct {
   int c1p1;
   int c2;
@@ -18,11 +21,18 @@ typedef struct {
   int c4;
 } Table1Type;
 
-void load_database(Table1Type *T1);
+typedef struct {
+  int index;
+
+} TableResultType;
+
+void load_database(Table1Type **T1, int *T1_size);
 
 void read_kernel_code(char const *file, size_t *kernel_length,
                       string *kernel_string);
 
 
 cl_device_id create_device(const int gpu);
+
+void size_calculator(size_t* global, size_t* local, int* interval, int table_size);
 

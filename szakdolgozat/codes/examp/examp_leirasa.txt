@@ -1,0 +1,38 @@
+head.hpp
+
+Az átláthatóság kedvéért ez a header fájl tartalmazza a szükséges egyéb header állományokat, mint az OpenCL és a MySQL connector.
+Itt található a használt névtér beállítása.
+A használható konstansok és értékeik.
+Itt vannak deffiniálva a használt struktúrák, illetve a függvény prototiousok.
+
+
+example.cpp
+
+kernel_length: a kernel kód karakter száma.
+kernel_string: a kernel kód szövege.
+
+read_kernel_code: Függvény, a megadott szöveges fájlt kiolvassa és beállírja a kernel_ length/string értékét.
+
+local_size: megadja hány munka elem kerüljön egy csoportba. Értéke osztható kell hogy legyen a global_size -al és nem lehet több mint 1024
+global_size: megadja a globális elemsámot. Gyakorlatban a kernel lefutásainak számát.
+
+Változók:
+
+kernel_length
+kernel_string
+
+t1
+t1_size
+
+local_size
+global_size
+item_interval_size
+
+clStatus
+device
+cotnext
+program
+kernel
+command_queue
+
+answer
