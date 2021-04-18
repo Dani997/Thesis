@@ -1,1 +1,22 @@
+Képjavítások:
++ coverd -> covered
++ 3 kernel működése
 
+Globális méret javítva mérések alapján
+  + Függőségek keresése
++ Eltolásoknál globális méret cseréje intervallum méretre
++ Pointer ábra ans szó cseréje
++ CPU - GPU kis caches hiányzó cella?
++ Shallow/Deep pipelines magyarul?
++ OpenCL program felépítése pontosítás
++ Globális méret meghatározása lista átnézése
++ Programkódok változóneveinek egységesítése
++ Drive rendezése
+
++++ Szimpla lekérdezés példa rövid
++++ Join lekérdezés példa
+  +++ Kapcsolás problélmája
+  
++ Konklúzió
+  Hány Where lekérdezés kell, hogy megérje az adatokat GPU-nak adni?
+  Kapcsolásnál bizonyos szűrési mérték felett a gpu sebessége legyőzi az indecxelés előnyeit?
