@@ -5,7 +5,7 @@ Képjavítások:
 Globális méret javítva mérések alapján
   + Függőségek keresése
 + Eltolásoknál globális méret cseréje intervallum méretre
-+ Pointer ábra ans szó cseréje
++ Pointer ábra ans szó cseréje kész
 + CPU - GPU kis caches hiányzó cella?
 + Shallow/Deep pipelines magyarul?
 + OpenCL program felépítése pontosítás
