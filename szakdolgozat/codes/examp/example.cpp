@@ -5,6 +5,7 @@ g++ -D_GLIBCXX_USE_CXX11_ABI=0 example.cpp -o example.out -lOpenCL
 #include "head.hpp"
 #include "timer_class.hpp"
 #define PROGRAM_FILE "examp.cl"
+#include <fstream>
 
 int main(void)
 {
@@ -14,7 +15,7 @@ timer.start();
 	size_t kernel_length;
 	string kernel_string;
 	read_kernel_code(PROGRAM_FILE, &kernel_length, &kernel_string);
-cout  <<  timer.elapsedMicroseconds() << " kod beolvas" << endl;
+cout  <<  timer.elapsedMicroseconds()  << endl;
 
 	Table1Type *t1 = NULL;
 	int t1_size;
@@ -25,7 +26,7 @@ timer.start();
 	size_t global_size;
 	int interval_size;
 	size_calculator(&global_size, &local_size, &interval_size, t1_size);
-cout  <<  timer.elapsedMicroseconds() << " meretek" << endl;
+cout  <<  timer.elapsedMicroseconds()  << endl;
 
 timer.start();
 	cl_int clStatus;
@@ -38,7 +39,7 @@ timer.start();
 	device = create_device(GPU);
 	context = clCreateContext(NULL, 1, &device, NULL, NULL, &clStatus);
 	command_queue = clCreateCommandQueue(context, device, 0, &clStatus);
-cout  <<  timer.elapsedMicroseconds() << " OpenCL osztályai" << endl;
+cout  <<  timer.elapsedMicroseconds()  << endl;
 
 timer.start();
 	TableResultType *result = (TableResultType*) malloc(sizeof(TableResultType) *t1_size);
@@ -51,28 +52,30 @@ timer.start();
 	cl_mem TableResult_clmem = clCreateBuffer(context, CL_MEM_READ_WRITE, t1_size* sizeof(Table1Type), NULL, &clStatus);
 	cl_mem Result_indexes_list_clmem = clCreateBuffer(context, CL_MEM_READ_WRITE, global_size* sizeof(int), NULL, &clStatus);
 
-cout  <<  timer.elapsedMicroseconds() << "m" << endl;
+cout  <<  timer.elapsedMicroseconds()  << endl;
 
 timer.start();
   //Bemeneti bufferek feltoltese
 	clStatus = clEnqueueWriteBuffer(command_queue, Table1_clmem, CL_TRUE, 0, t1_size* sizeof(Table1Type), t1, 0,	NULL, NULL);
 	clStatus = clEnqueueWriteBuffer(command_queue, Table_size_clmem, CL_TRUE, 0, sizeof(int), &t1_size, 0,	NULL, NULL);
 	clStatus = clEnqueueWriteBuffer(command_queue, Interval_size_clmem, CL_TRUE, 0, sizeof(int), &interval_size, 0, NULL, NULL);
-cout  <<  timer.elapsedMicroseconds() << "m" << endl;
+cout  <<  timer.elapsedMicroseconds()  << endl;
 
 timer.start();
 	// Create a program from the kernel source
 	program =
 		clCreateProgramWithSource(context, 1, (const char **) &kernel_string,
 			(const size_t *) &kernel_length, &clStatus);
-
+cout  <<  timer.elapsedMicroseconds() << endl;
+timer.start();
 	clStatus = clBuildProgram(program, 1, &device, NULL, NULL, NULL);
-cout  <<  timer.elapsedMicroseconds() << "k1" << endl;
+cout  <<  timer.elapsedMicroseconds()  << endl;
+
 timer.start();
 	// Kernel letrehozasa
 	kernel = clCreateKernel(program, "examp", &clStatus);
+cout  <<  timer.elapsedMicroseconds()  << endl;
 
-cout  <<  timer.elapsedMicroseconds() << "k2" << endl;
 timer.start();
 	clStatus =
 		clSetKernelArg(kernel, 0, sizeof(cl_mem), (Table1Type*) &Table1_clmem);
@@ -84,10 +87,11 @@ timer.start();
 		clSetKernelArg(kernel, 3, sizeof(cl_mem), (int*) &Table_size_clmem);
 	clStatus =
 		clSetKernelArg(kernel, 4, sizeof(cl_mem), (int*) &Interval_size_clmem);
-
+cout  <<  timer.elapsedMicroseconds()  << endl;		
+timer.start();
 	clStatus = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
 	clStatus = clFinish(command_queue);
-cout  <<  timer.elapsedMicroseconds() << "k end" << endl;
+cout  <<  timer.elapsedMicroseconds()  << endl;
 
 int sum =0;
   timer.start();
@@ -104,23 +108,36 @@ int sum =0;
 	clStatus = clFlush(command_queue);
 	clStatus = clFinish(command_queue);
 
-  cout << timer.elapsedMicroseconds() << " kiolv" << endl;    
+  cout << timer.elapsedMicroseconds()  << endl;  
 
- /* for(int i = 0; i< sum; i++)
-  {
-    cout << t1[result[ i ].index].c1p1 << endl;
-  }*/
+int s=0;
+  for(int ix=0; ix<global_size; ix++)
+	s+=result_counter[ix];
 
-/*
-for(i=0; i< global_size; i++)
+cout << s << endl;
+
+cout << endl;
+
+
+    ofstream myfile;
+    myfile.open("res.csv");
+
+	timer.start();
+int index , i, j;
+for(i=0; i < global_size; i++)
 {
-
   for(j=0; j<result_counter[i]; j++)
-  cout << t1[result[ i*global_size + j ].index].c1p1 << endl;
+  {
+	index = i*interval_size + j;
+  myfile << t1[result[ index ].index].c1p1 << ","
+		<< t1[result[ index ].index].c2 << ","
+		<< t1[result[ index ].index].c3 << ","
+		<< t1[result[ index ].index].c4 
+		<< endl;
+}
+}
 
-}*/
-
-
+cout << timer.elapsedMicroseconds() << endl; 
 
 	return 0;
 
@@ -184,9 +201,9 @@ void load_database(Table1Type **T1, int *T1_size)
 
 		con->setSchema("speed_test");
 
-	cout << timer2.elapsedMicroseconds() << " szerver kapcs"<< endl;
+	cout << timer2.elapsedMicroseconds() << endl;
 	timer2.start();
-		pstmt = con->prepareStatement("SELECT *FROM speedtest_1048576 Limit 65536");
+		pstmt = con->prepareStatement("SELECT *FROM speedtest_1048576 ");
 		res = pstmt->executeQuery();
 	cout << timer2.elapsedMicroseconds() << endl;
 	timer2.start();
@@ -262,10 +279,14 @@ cl_device_id create_device(const int gpu)
 void size_calculator(size_t *global, size_t *local, int *interval, int table_size)
 {
 
-	*interval = sqrt(table_size);
+	*global = 1024;
+	*interval = table_size / *global + 1;
+	*local = 32;
+
+	/**interval = sqrt(table_size);
 	if ((*interval % *local) != 0)
 		*global = *interval + (*local - (*interval % *local));
-	else *global = *interval;
+	else *global = *interval;*/
 
 	//cout << *global << "; " << *interval << endl;
 }

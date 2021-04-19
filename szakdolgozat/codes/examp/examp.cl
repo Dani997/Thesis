@@ -22,7 +22,7 @@ int x= index * *Range;
 
 for(i = x ; i < x+ *Range; i++)
 {
-    if( i< *limit && T1[i].c3 == 1 && T1[i].c4 > 9500)
+    if( i< *limit && T1[i].c4 <1 )
     {
         ANS[ index* *Range + Counter[index] ].index = i;
         atomic_inc(&Counter[index]);
