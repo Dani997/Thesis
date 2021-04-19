@@ -71,31 +71,33 @@ c1p1, c2, c3, c4
 0, 1, 25, 9707
 1, 1, 10, 6539
 \end{python}
-
+\newpage
 \Section{Az \texttt{EXPLAIN} használata}
 
-A MySQLWorkbench grafikus változatát fogom használni, hisz sokkal jobban szemlélteti a lényegét.
+A MySQLWorkbench grafikus képeit fogom használni melyeket újraalkottam minőségük miatt. Ez a módszer sokkal jobban szemlélteti miképpen dolgozza fel az utasítást az adatbázis kezelő motorja.
 
-Vizsgáljuk egy egyszerű lekérdezést.
+\SubSection{Egyszerű lekérdezés}
+Vizsgáljuk a következő lekérdezést:
 \begin{python}
 SELECT * from thesis.T1 WHERE c3=25; 
 \end{python}
 \begin{figure}[h!]
 \centering
-\includegraphics[width=4cm]{images/1-1.png}
+\includegraphics[width=3.5cm]{images/explain/1-1.png}
 \caption{Indexelés nélküli lekérdezés}
 \label{fig:schema}
 \end{figure}
 
 A grafikus Execution Plan az előbbi ábrával állt elő. Láthatjuk, hogy a T1 -es tábla összes sorát átvizsgálta, a c3 megfelelő értékeinek megkereséséhez. Ez egy nagy táblában egy rendkívül költséges művelet lenne. 
 Erre nyújt megoldást az indexelés használata.
+
 \begin{python} 
 ALTER TABLE  thesis.T1  ADD INDEX (c3);
 \end{python}
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=4cm]{images/1-2.png}
+\includegraphics[width=4.2cm]{images/explain/1-2.png}
 \caption{Indexelés nélküli lekérdezés}
 \label{fig:schema}
 \end{figure}
@@ -107,6 +109,9 @@ Parancs az indexek eltávolításához:
 ALTER TABLE  thesis.T1  ADD INDEX (c3);
 \end{python}
 
+\newpage
+\SubSection{Csoportosítás}
+
 Vizsgáljuk egy kicsit összetettebb lekérdezést: 
 \begin{python} 
 SELECT MAX(c4), c3, c2 from thesis.T1 WHERE T1.c3=18  group by c2;
@@ -114,8 +119,8 @@ SELECT MAX(c4), c3, c2 from thesis.T1 WHERE T1.c3=18  group by c2;
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=4cm]{images/2-1.png}
-\caption{Indexelés nélküli lekérdezés 2.}
+\includegraphics[width=3.5cm]{images/explain/2-1.png}
+\caption{Csoportosítás indexelés nélkül}
 \label{fig:schema}
 \end{figure}
 
@@ -123,21 +128,21 @@ A lekérdezés elemzésénél két problémát fedezhetünk fel. Az egyik a telj
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=3.5cm]{images/2-2.png}
-\includegraphics[width=3.5cm]{images/2-3.png}
-\includegraphics[width=3.5cm]{images/2-4.png}
-\includegraphics[width=3.5cm]{images/2-5.png}
+\includegraphics[width=4.2cm]{images/explain/2-4.png}
+\hspace{1cm} 
+\includegraphics[width=3.51cm]{images/explain/2-2.png}
+\hspace{1cm} 
+\includegraphics[width=4.2cm]{images/explain/covered.png}
 \caption{Indexelések változatai.}
 \label{fig:schema}
 \end{figure}
 
-
 Nézzük a következő négy indexelést.
 \begin{itemize} 
-\item Első kép: A c3 -as oszlopot indexel láttam el, így az keresés költsége lecsökkent, de az ideiglenes tábla megmaradt.
-\item Második kép: A c2 -es oszlopot indexeltem, így az érték keresés a c3 -as oszlopon teljes, de nem jön létre ideiglenes tábla.
-\item Harmadik kép: Egyezik az első képpel, pedig a c3 és c2 -es oszlop is indexelve van.
-\item Negyedik kép: Közös indexet hoztam létre a c2 és c3 -s oszlopokból így a kétféle indexelés előnyei egyszerre tudnak érvényesülni a lekérdezés során.
+\item A \texttt{c3} -as oszlop indexelésével az első példához hasonlóan lecsökkent a szűrés költsége.
+\item A \texttt{c2} -es oszlop indexelésével az ideiglenes tábla nem jön létre lekérdezés közben.
+\item \texttt{c2} és \texttt{c3} külön indexelése esetén ugyan az történik mint \texttt{c3} indexelésekor.
+\item \texttt{c2} és \texttt{c3} közös indexelésével egyesíthetjük és két előnyt és így a lekérdezés optimális sebességű és memória igényű lesz.
 \end{itemize} 
 Kevert index létrehozása és törlése:
 \begin{python}
@@ -145,6 +150,44 @@ ALTER TABLE T1 ADD INDEX covered (c3,c2);
 ALTER TABLE thesis.T1 DROP INDEX covered;
 \end{python}
 
+\SubSection{Kapcsolt táblák}
 
+Ez a lekérdezés már összetettebb, annak érdekében, hogy látszódjon a lekérdezés optimalizáló mely esetekben milyen sorrendben kapcsolja össze a táblákat.
+\begin{python}
+SELECT T1.c3, T2.c2, T3.c3 FROM T3 JOIN T2 JOIN T1 
+	ON (T1.c1p1 = T2.fk_p1_p2 AND T2.c1p2 = T3.fk_p2_p3) 
+	WHERE  T3.c4=5 AND T1.c2 = 1 ;
+\end{python}
 
+\begin{figure}[h!]
+\centering
+\includegraphics[width=14cm]{images/explain/3-1.png}
+\caption{JOIN indexelés nélkül}
+\label{fig:schema}
+\end{figure}
 
+Látható, hogy a kapcsolások sorrendje nem egyezik a lekérdezésben megadott sorrenddel, illetve látjuk az előbbi példákból már jól ismert teljes tábla átvizsgálás hibáját.
+Miután \texttt{T3} -as tábla vizsgált oszlopát indexeléssel láttam el, szinte ugyan ezt az eredményt kaptam, leszámítva két értéket. \texttt{T3} -nál a költség 1190.96 -ról 1198.86 -ra nőtt illetve a 2. \texttt{nested loop} -nál a sorok száma 450 re csökkent.
+
+\newpage
+A következő vizsgálatban csak \texttt{T1} \texttt{c2} -es oszlopa indexelt.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=14cm]{images/explain/3-2.png}
+\caption{JOIN T1.c2 és T3.c4 indexelésével}
+\label{fig:schema}
+\end{figure}
+
+Az eredményből az látszik, hogy megváltozott a táblák kapcsolási sorrendje. A query első lépésben szűri a \texttt{T3} -as táblát és csak utána kapcsolja hozzá a többit. A másik dolog amit meg lehet figyelni, hogy nem az idegen kulcs szerepel a használt indexnél, hanem az elsődleges. De ez is a sorrend változás következménye.
+
+A negyedik vizsgálatban mind a két tábla használt oszlopát indexekkel láttam el.
+\begin{figure}[h!]
+\centering
+\includegraphics[width=14cm]{images/explain/3-3.png}
+\caption{JOIN T1.c2 indexelésével}
+\label{fig:schema}
+\end{figure}
+
+Ezen az ábrán egy azt a változást láthatjuk az előzőhöz képest, hogy a \texttt{T3} as táblánál, az optimalizáló mind a két indexet használja, ugyanis a sorrend változatlan maradt, és \texttt{T3} alatt megjelent a használt index neve.
+Az ábrákon látható query cost megtévesztő lehet, hisz arra enged következtetni, hogy nem érdemes indexelést használni ebben az esetben, viszont a lekérdezés sebességének vizsgálata egyértelműen mutatja, hogy az indexek használata jelentős sebesség növekedéssel járt. 

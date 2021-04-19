@@ -239,6 +239,12 @@ Ahhoz, hogy OpenCL el kezelni tudjuk az adatokat először szükség lesz egy st
 \caption{Adatbázistábla átalakítása tömbbé}
 \label{fig:opencl}
 \end{figure}
+\begin{figure}[h!]
+\centering
+\includegraphics[width=11cm]{images/data/structure.png}
+\caption{Adatbázistábla átalakítása tömbbé}
+\label{fig:opencl}
+\end{figure}
 
 \begin{itemize}
 \item A struktúra megfelel a tábla felépítésének.
@@ -262,7 +268,7 @@ res = pstmt->executeQuery();
 \end{cpp}
 \begin{figure}[h!]
 \centering
-\includegraphics[width=\textwidth]{images/pointer1.png}
+\includegraphics[width=\textwidth]{images/implementation/pointer_01.png}
 \caption{Pointerek a létrehozáskor}
 \label{fig:opencl}
 \end{figure}
@@ -284,29 +290,31 @@ while (res->next())
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=\textwidth]{images/pointer2.png}
+\includegraphics[width=\textwidth]{images/implementation/pointer_02.png}
 \caption{Pointerek teljes működése}
 \label{fig:opencl}
 \end{figure}
 
 \Section{Globális és lokális méret meghatározása}
+Ennél a pontnál oda kell figyelni pár alapvető dologra:
 \begin{itemize}
-\item Ennél a pontnál oda kell figyelni pár alapvető dologra.
 \item A globális méret korlátlan.
-\item A lokális méret avagy munkaelemek száma egy munkacsoportban legfeljebb, 1024 lehet.
-\item A lokális méret osztója kell, hogy legyen a globális méretnek.
-\item A túl sok vagy túl kevés munkacsoport használata esetén a párhuzamosság előnye elveszhet.
-\item A munkacsoportok párhuzamosan dolgoznak egymás mellett.
-\item Munkacsoporton belül a munkaelemek feldolgozása párhuzamos.
-\item Munkacsoportok között nincs szinkronizáció, csak munka elemek között, ha egy munkacsoportba tartoznak.
+\item A lokális méret avagy munkaelemek száma egy munkacsoportban legfeljebb 1024 lehet.
+\item A globális méretnek a lokális többszörösének kell lennie.
+\item A túl sok vagy túl kevés munkacsoport használata esetén a párhuzamosság sérül.
+\item Több munkacsoport dolgozik párhuzamosan egymás mellett.
+\item Munkacsoporton belül a munkaelemek feldolgozása bizonyos elemszámig párhuzamos.
+\item Munkacsoportok között nem lehetséges szinkronizáció, csak munka elemek között, amennyiben azok egy munkacsoportba tartoznak.
 \item Nem használható kölcsönös kizárás, a szemafor végtelen ciklust okoz.
 \end{itemize}
 
-\SubSection{Alap működés}
+\SubSection{Működési elv}
 
-Alap esetben a bemeneti elemszámot megadjuk globális méretnek, gyakorlatilag ennyiszer fog lefutni a kernel kód.
-Megadjuk a lokális méretet, ezzel munkacsoportokba bontottuk az elemeket.
-A végeredményt tartalmazó kimeneti vektor hossza egyezik a globális mérettel, így nem ütközhetünk bele abba a hibába, hogy két számítási elem ugyan oda próbáljon írni. Amennyiben például a 545. elem megfelel, akkor az indexe és egyéb hozzá tartozó értékek az 545. helyen lesznek a kimeneti tömbben.
+Egyszerű esetben a bementi elemszámot megadhatjuk mint globális méret, ez gyakorlatban megadja, hogy hányszor fog lefutni a kernel függvény. A $get\_global\_id(0)$ meghívásával megkapjuk az aktuális azonosítót, ez 0 -tól globális méret -1 ig terjed. Innentől tekinthetünk a teljes kódra úgy, mintha egy párhuzamos futó \texttt{for} ciklusban lenne.
+
+Ezen kívül meg kell adnunk a lokális méretet, ami az elemek száma egy munkacsoporton belül. A kernel futása közben ezt is megkaphatjuk a $get\_local\_id(0)$ használatával, csak úgy mint a munkacsoport azonosítót vagy az említett paraméterek teljes elemszámát.
+
+A végeredményt tartalmazó kimeneti tömb hossza egyezik a globális mérettel, így nem ütközhetünk bele abba a hibába, hogy két számítási elem ugyan oda próbáljon írni. Amennyiben például a 545. elem megfelel, akkor az indexe és egyéb hozzá tartozó értékek az 545. helyen lesznek a kimeneti tömbben.
 
 \begin{figure}[h!]
 \centering
@@ -326,10 +334,10 @@ Viszont látjuk, hogy a lokális méret korlátai miatt szükség lehet arra, ho
 Mondjuk azt, hogy egy munkaegység ne csak egy elemén dolgozzon a tömbnek, hanem egy intervallumán.
 Határozzuk meg a méreteket a következők alapján:
 
-$$ interval\_size = \floor{ \sqrt{table\_size} } $$
-$$global\_size = interval\_size + ( local\_size - (interval\_size\mod(local\_size)) )$$
+$$ global\_size = 1024 $$
+$$interval\_size =  \left\lfloor \frac{table\_size }{globalsize\_size} \right\rfloor  +1  $$
 
-Ezzel elértük, hogy a munkacsoportok száma drasztikusan csökkenjen. Illetve egy másik fontos előnyre is szert ettünk, ami az eredmények számlálása illetve kiolvasása során lesz jelentős.
+Ezzel elértük, hogy a munkacsoportok száma drasztikusan csökkenjen. Illetve egy másik fontos előnyre is szert tettünk, ami az eredmények számlálása illetve kiolvasása során lesz jelentős.
 
 \SubSection{A kernelkód működése}
 
@@ -347,11 +355,30 @@ De vegyük észre, hogy legfeljebb csak a gyökével nőtt az eredetileg kiolvas
 A számítási elemek egy intervallumon dolgoznak és továbbra is munkacsoportokba vannak bontva de ez a működésre nincs hatással, legfeljebb a teljesítményre.
 
 \SubSection{Az elemek kiolvasása}
-Meglehet tenni azt, hogy nem olvassuk ki azonnal a végeredményt tartalmazó tömböt.
-Első lépésben kiolvassuk a számlálókat, ezt végig járva az eredmény tömbből kiolvashatjuk csak azokat a részeket amelyek ténylegesen
-tartalmaznak indexeket. 
-Később látni fogjuk, hogy ez a módszer mégsem olyan hatékony mint első ránézésre gondolnánk.
+A kernelkód működéséből látjuk, hogy több módszert is tudunk alkalmazni az elemek kiolvasására. A találatok számát tartalmazó tömböt biztosan ki kell másolnunk.
 
+Választhatjuk azt, hogy kimásoljuk a teljes kimenetet, ekkor annak olvasása a következő algoritmus alapján zajlik:
+\begin{python}
+for(i=0; i< global_size; i++)
+{
+  offset = i*interval_size;
+  
+  for(j=0; j<result_counter[i]; j++)
+  cout << t1[ result[ offset + j ].index ].c1p1 << endl;
+}
+\end{python}
+Végig kell menni a számlálón aminek hossza \texttt{global size}, majd a \texttt{ i * global size} eltolást használva annyi elemet kell sorban kiolvasni az adott részről, amekkora érték a számlálóban található. Ezzel ugrálva végig tudunk futni a kimeneten és ki tudjuk olvasni az indexeket illetve kiszámított értékeket.
+
+Ezen kívül megtehetjük azt is, hogy már a kiolvasásnál kihagyjuk az értékes információt nem tartalmazó részeket.
+\begin{python}
+clStatus = clEnqueueReadBuffer(command_queue, TableResult_clmem, CL_TRUE, 
+	i*interval_size * sizeof(TableResultType),
+	result_counter[i]* sizeof(TableResultType), 
+	&result[count]  , 0, NULL, NULL);
+\end{python}
+
+Kiolvasásnál megadjuk az eltolást amit az előző módon számolunk annyi különbséggel, hogy megadjuk egy elem memória méretét:
+$$i * interval\_size * sizeof(TableResultType)$$ezután megadjuk, hogy az eltolástól kezdve mekkora memória méretet szeretnénk kiolvasni: $$result\_counter[i] * sizeof(TableResultType)$$Ezen kívül a másolás cél memóriacímét mindig eltoljuk, az eddigi találatok számával: $$\&result[count].$$
 
 \begin{figure}[h!]
 \centering
@@ -360,6 +387,24 @@ Később látni fogjuk, hogy ez a módszer mégsem olyan hatékony mint első r�
 \label{fig:opencl}
 \end{figure}
 
+\SubSection{Összetett lekérdezés}
 
+Az előzőekben láthattuk, hogyan lehet adatok be illetve kijuttatni a grafikus kártya memóriájába illetve, hogyan próbálhatjuk csökkenti a tábla robusztus méretének hátrányait.
+Vizsgáljuk meg, hogyan lehet elvégezni egy olyan lekérdezést, ahol a több táblát kell összekapcsolni.
+
+Amint átgondoljuk azonnal látjuk mi a probléma, az átvizsgálandó adatok száma a sokszorosára ugrik. Megoldásként, végezzük el először a táblákra vonatkozó szűréseket ezzel csökkentve a mennyiségeket, itt akár külön kernelre is szükség lehet táblánként.
+Az egy táblára vonatkozó kernelek futtatása után az összekapcsolást végző kernel is megkezdheti a munkáját, majd kiolvashatjuk az eredményt.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=12cm]{images/join_kernels.png}
+\caption{OpenCL}
+\label{fig:opencl}
+\end{figure}
+
+Az 1. és 2. kernel az előzőekben taglalt módon előállítja saját eredményeit (zöld rész). 
+A 3. kernel megkapja a két táblát, a 2. tábla méretét és az előző két kernel által előállított eredményeket.
+Az első eredmény kiolvasási módszer alkalmazásával és a kulcsok figyelésével a két táblát összekapcsoljuk és előállítjuk az eredményt.
+A táblák méretére nincsen szükség, ugyanis az eredmény biztosan nem tartalmaz olyan indexet ami kívül esne az eredeti táblákon. A második táblánál viszont szükség van a globális méretre az eredmény kiolvasásához, az első táblánál ez a kernel globális mérete.
 
 
