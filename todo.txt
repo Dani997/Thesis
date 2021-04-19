@@ -1,5 +1,5 @@
 Képjavítások:
-+ coverd -> covered
++ coverd -> covered kész.
 + 3 kernel működése
 
 Globális méret javítva mérések alapján
