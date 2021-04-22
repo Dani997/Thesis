@@ -60,17 +60,16 @@ Az eredményt a szemléltetett módon lehet kiolvasni:
            << endl;
 \end{cpp}
 
-
 Lekérdezés után fontos törölni az eredményhalmazt és az elkészített utasítást, ugyanis ezek memóriát foglalnak, és több lekérdezés esetén a lekérdezés halmaz megtöltheti a teljes memóriát is. 
 \begin{cpp}
     delete res;
     delete pstmt;
 \end{cpp}
-
-
 Futtatáshoz és fordításhoz a következő parancsokat használhatjuk: 
 \begin{python}
-g++ -D_GLIBCXX_USE_CXX11_ABI=0 connectortest.cpp -o connectortest.out -lmysqlcppconn
+g++ -D_GLIBCXX_USE_CXX11_ABI=0 connectortest.cpp -o connectortest.out 
+-lmysqlcppconn
+
 ./connectortest.out
 \end{python}
 
@@ -235,12 +234,6 @@ Ahhoz, hogy OpenCL el kezelni tudjuk az adatokat először szükség lesz egy st
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=10cm]{images/table-struct.png}
-\caption{Adatbázistábla átalakítása tömbbé}
-\label{fig:opencl}
-\end{figure}
-\begin{figure}[h!]
-\centering
 \includegraphics[width=11cm]{images/data/structure.png}
 \caption{Adatbázistábla átalakítása tömbbé}
 \label{fig:opencl}
@@ -318,7 +311,7 @@ A végeredményt tartalmazó kimeneti tömb hossza egyezik a globális mérettel
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=\textwidth]{images/workgroups.png}
+\includegraphics[width=\textwidth]{images/workgroups_black.png}
 \caption{Munkacsoportokra bontás}
 \label{fig:opencl}
 \end{figure}
@@ -347,7 +340,7 @@ De vegyük észre, hogy legfeljebb csak a gyökével nőtt az eredetileg kiolvas
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=\textwidth]{images/itemgroup.png}
+\includegraphics[width=\textwidth]{images/itemgroup_black.png}
 \caption{Munkacsoportokra bontás}
 \label{fig:opencl}
 \end{figure}
@@ -382,7 +375,7 @@ $$i * interval\_size * sizeof(TableResultType)$$ezután megadjuk, hogy az eltol�
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=\textwidth]{images/kimasol.png}
+\includegraphics[width=\textwidth]{images/copy_02.png}
 \caption{Munkacsoportokra bontás}
 \label{fig:opencl}
 \end{figure}

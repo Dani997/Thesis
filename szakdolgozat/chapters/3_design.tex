@@ -2,21 +2,56 @@
 
 \Section{Execution Plan}
 
-A lekérdezés végrehajtási terv elkészítésével információkat nyerhetünk a lekérdezések hatékonyságáról. Ennek segítségével optimalizálhatjuk például egy olyan weboldal működését, mely sok és bonyolultabb lekérdezést végez adatbázisból. A hatékonyságot általában indexek hozzáadásával vagy elvételével illetve a táblák kapcsolási sorrendjének módosításával vagy kocsolási módjának megváltoztatásával segíthetjük elő.
+A lekérdezés végrehajtási terv elkészítésével információkat nyerhetünk a lekérdezések hatékonyságáról. Ennek segítségével optimalizálhatjuk például egy olyan weboldal működését, mely sok és/vagy bonyolult lekérdezést végez adatbázisból. A hatékonyságot általában indexek hozzáadásával vagy elvételével illetve a táblák kapcsolási sorrendjének módosításával vagy kapcsolási módjának megváltoztatásával segíthetjük elő.
 
-\Section{Az \texttt{EXPLAIN} parancs}
+\SubSection{Az \texttt{EXPLAIN} parancs}
 
-A MySQL adatbázismotorban az Executing Plan -hez szükséges információkat az EXPLAIN parancsal használatával kaphatjuk meg.
-A parancs megfelelő utasítással együtt használva (SELECT, DELETE, INSERT, REPLACE, UPDATE)  információkat jelenít meg az optimalizáló által előállított feldolgozási tervről. Láthatóvá válik például a táblák összekapcsolási sorrendje.
+\texttt{MySQL} adatbázis kezelő használatakor az Executing Plan -hez szükséges információkat az \texttt{EXPLAIN} parancs segítségével kaphatjuk meg.
+Az utasítás megfelelő kifejezéssel együtt használva (\texttt{SELECT}, \texttt{DELETE}, \texttt{INSERT}, \texttt{REPLACE}, \texttt{UPDATE})  információkat jelenít meg az optimalizáló által előállított feldolgozási tervről. Láthatóvá válik például a táblák összekapcsolási sorrendje és a használt index neve.
 
-További információk érhetők el a SHOW WARNINGS használatával.
-A FORMAT parancs használható kimeneti formátum választásra. TRADITIONAL az alapértelmezett táblázatos alak. JSON pedig JSON formátumban jeleníti meg a kimenetet.
+További információk érhetők el a \texttt{SHOW WARNINGS} használatával.
+A \texttt{FORMAT} parancs használható kimeneti formátum választásra. \texttt{TRADITIONAL} az alapértelmezett táblázatos alak illetve \texttt{JSON} ami elnevezésének megfelelő formátumban jelenti meg a kimenetet.
 
-A parancs használata rávilágít arra, hol van szükség indexek használatára a lekérdezés gyorsításához, illetve ellenőrizhetjük, hogy a táblák megfelelő sorrendben vannak -e összekapcsolva. 
-JOIN helyett STRAIGHT\_JOIN használatával tippek adhatóak az optimalizálónak, a táblák kapcsolási sorrendjéről. De a STRAIGHT\_JOIN letiltja a semijoin transzformációkat, így indexelés ebben az esetben nem használható.
-ANALYZE TABLE paranccsal frissíthetőek a statisztikák, mint a kulcsok számossága. Ez befolyásolhatja az optimalizáló döntéseit. 
+A parancs használata rávilágít arra, hogy hol van szükség indexek használatára a lekérdezés gyorsításához, illetve ellenőrizhetjük, hogy a táblák megfelelő sorrendben vannak -e összekapcsolva. 
+\texttt{JOIN} helyett \texttt{STRAIGHT\_JOIN} használatával tippek adhatók az optimalizálónak a táblák kapcsolási sorrendjéről. De a \texttt{STRAIGHT\_JOIN} letiltja a \texttt{semijoin} transzformációkat, így indexelés ebben az esetben nem használható.
+
+\texttt{ANALYZE TABLE} utasítással frissíthetőek a statisztikák, mint a kulcsok számossága. Ez befolyásolhatja az optimalizáló döntéseit. 
 
 % TODO: Ide érdemes kifejteni, MySQL Workbench-es példákkal illusztrálni, hogy hogyan működik a parancs.
+
+\begin{table}[h!]
+\centering
+\caption{\texttt{EXPLAIN} kimeneti oszlopai}
+\medskip
+\label{tab:cpuvsgpu}
+\begin{tabular}{|p{4cm}|p{4cm}|p{6cm}|}
+\hline
+oszlop & \texttt{JSON} elnevezés & Jelentése \\
+\hline
+id & select\_id & A \texttt{SELECT} azonosító \\
+\hline
+select\_type & - & A \texttt{SELECT} típusa \\
+\hline
+table & table\_name & a kimeneti sor táblázatának neve  \\
+\hline
+partitions & partitions & Az egyező partíciók \\
+\hline
+type & access\_type & \texttt{JOIN} típusa  \\
+\hline
+possible\_keys & possyble\_keys & választható indexek \\
+\hline
+key & key & a választott index \\
+\hline
+key\_len & key\_length & a kiválasztott kulcs hossza \\
+\hline
+ref & ref & oszlopok az indexhez képest \\
+\hline
+rows & rows & a vizsgáladnó sorok becslése \\
+\hline
+filtered & filtered & a szűrt sorok százaléka a tábla állapota szerint \\
+\hline
+\end{tabular}
+\end{table}
 
 \Section{Teszt adatbázis megtervezése}
 
@@ -25,7 +60,7 @@ Olyan adatbázist kell választanunk ennek kipróbáláshoz amelyben használhat
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=\textwidth]{images/new_schema.png}
+\includegraphics[width=10cm]{images/new_schema.png}
 \caption{Adatbázis séma}
 \label{fig:schema}
 \end{figure}
@@ -72,7 +107,7 @@ c1p1, c2, c3, c4
 1, 1, 10, 6539
 \end{python}
 \newpage
-\Section{Az \texttt{EXPLAIN} használata}
+\Section{\texttt{EXPLAIN} a gyakorlatban}
 
 A MySQLWorkbench grafikus képeit fogom használni melyeket újraalkottam minőségük miatt. Ez a módszer sokkal jobban szemlélteti miképpen dolgozza fel az utasítást az adatbázis kezelő motorja.
 
@@ -88,7 +123,7 @@ SELECT * from thesis.T1 WHERE c3=25;
 \label{fig:schema}
 \end{figure}
 
-A grafikus Execution Plan az előbbi ábrával állt elő. Láthatjuk, hogy a T1 -es tábla összes sorát átvizsgálta, a c3 megfelelő értékeinek megkereséséhez. Ez egy nagy táblában egy rendkívül költséges művelet lenne. 
+A grafikus Execution Plan az előbbi ábrával állt elő. Láthatjuk, hogy a T1 -es tábla összes sora átvizsgálásra kerül, a c3 megfelelő értékeinek megkereséséhez. Ez egy nagy táblában egy rendkívül költséges művelet lenne. 
 Erre nyújt megoldást az indexelés használata.
 
 \begin{python} 
@@ -106,7 +141,7 @@ ALTER TABLE  thesis.T1  ADD INDEX (c3);
 
 Parancs az indexek eltávolításához:
 \begin{python} 
-ALTER TABLE  thesis.T1  ADD INDEX (c3);
+ALTER TABLE  thesis.T1  DROP INDEX c3;
 \end{python}
 
 \newpage

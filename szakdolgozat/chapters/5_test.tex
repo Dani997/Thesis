@@ -1,28 +1,14 @@
 \Chapter{Mérések, összehasonlítások}
 
-Ebben a fejezetben megvizsgáljuk a program különböző részeit futás idő szempontjából. Ezek több csoportba bonthatjuk. Egyes részek futási ideje nagyban függ a kezelt adatok mennyiségétől, más részeket pedig elegendő lehet egyszer elvégezni. Illetve vannak azok a részek, amelyik nem csak az adatmennyiségtől függnek, hanem magától az algoritmustól vagy a párhuzamosítás mértékétől is.
+Ebben a fejezetben megvizsgáljuk a program különböző részeit futás idő szempontjából. Egyes programrészeket ideje konstans az az nem függ az adatok mennyiségétől, így ezek ideje csak a fejezet végén, a gyakorlati példáknál kerülnek feltüntetésre. Első sorban nézzük azokat a részeket amelyek nagyban függnek a táblamérettől vagy az előállítani kívánt kimenettől.  
 
-\Section{Állandó idejű részek}
-Ennek a résznek a vizsgálata a legegyszerűbb, mégis ugyan olyan fontos hiszen, hogy a program valóban hatékony legyen ezeket az időket is vissza kell nyerni a lekérdezéseknél.
 
-Kernelkód beolvasása a fájlból.
-40 mikroszekundum.
+\Section{Adatok előkészítése}
 
-Kapcsolat létrehozása az adatbázis szerverrel:
-16500 mikroszekundum.
-
-OpenCL: driver kontextus, parancssor
-50 000 mikroszekundum
-
-Program létrehozása és felépítése az eszközhöz
-1000 mikroszekundum
-
-\Section{Adatmennyiségtől függő részek}
-
-A hatékonyság mérésének bonyolultabbik része következik. Itt vizsgáljuk meg, hogyan érdemes mozgatni az adatokat a számítógépen belül úgy, hogy nyereséges maradjon a kód.
+Itt vizsgáljuk részletesen azt, mennyi idő eljuttatni az adatokat a \texttt{MySQL} szerverről a videokártya puffereibe. Sejteni lehet, hogy a legtöbb értékes időt itt veszíthetjük el.
 
 \SubSection{A MySQL lekérdezés sebessége}
-Ezt a sebességet legpontosabban úgy kaphatjuk meg ha a program következő két sorának idejét vizsgáljuk.
+Ezt a sebességet a következő két sor vizsgálatával kaphatjuk meg a legpontosabban:
 \begin{python}
 pstmt = con->prepareStatement(command);
 res = pstmt->executeQuery();
@@ -58,7 +44,9 @@ Ezen kívül a grafikonon látható tüskék mértékének csökkentése érdek�
 \end{figure}
 %BETŰMÉRET NAGYÍTÁSRA SZORUL
 Az ábrán, egyértelműen látható, hogy a sorok számának növekedésével az idő is lineárisan nő.
-Jelmagyarázatnál látható egyenes egyenletekből becsléseket lehet készíteni adott sorszámhoz. Tegyük fel, hogy a négy oszlop felett az időnövekedés lineáris, így több oszlopra egyszerű szorzással megkaphatjuk az időket.
+Jelmagyarázatnál látható egyenes egyenletekből becsléseket lehet készíteni adott paraméterekkel rendelkező szűrés nélküli lekérdezéshez. 
+
+Tegyük fel, hogy a négy oszlop felett az időnövekedés lineáris, így több oszlopra egyszerű szorzással megkaphatjuk az időket.
 
 4 és 6 oszlop esetén:
 $$ x = \text{sorok száma}/32768 - 1 $$
@@ -66,9 +54,8 @@ $$ 7813 * \text{sorok száma} + 7783 = \text{lekérdezés ideje}$$
 $$ \text{lekérdezés ideje} * 1.5 = \text{lekérdezés ideje 6 oszlopra} $$
 
 
-\SubSection{A query válaszának átmásolása a struktúra tömbbe}
-Az előző alfejezetben kapott választ át kell másolni saját típusú tömbbe, hogy megfelelően tudjuk kezelni. Ez egy rendkívül időigényes rész. 
-
+\SubSection{A query válaszának átmásolása a saját tömbbe}
+A lekérdezésből kapott választ át kell másolni az általunk létrehozott tömbbe. Ez az egyik legköltségesebb művelet, ezért optimalizálásként célszerű csak a felhasznált oszlopokat lekérni, ez vonatkozik az előző alfejezetre is.
 A mért program szakasz:
 \begin{python}
 int i = 0;
@@ -277,44 +264,233 @@ Azoknál a lekérdezéseknél, a kernelnek nem csak egy indexel kell visszatérn
 
 Ezek alapján meghatározható, hogy az 
 \newpage
-\Section{Hatékonyság a gyakorlatban}
+\Section{Gyakorlati példák és következtetések}
 
 A hatékonyság megállapításához a \texttt{A MySQL lekérdezés sebessége} részben használt módszert fogom alkalmazni.
-Azt már most észrevehetjük, hogy ezen oknál fogva a szerverre való csatlakozás sebességét elhanyagolhatjuk ugyanis minden kliensnek szüksége van rá. 
+A fejezetben előfordulnak rövidítések: CONN - a MySQL Connector programra a CL pedig az OpenCL -t használó programra utal. 
+A k betű ezres szorzót, az i betű pedig indexelés használatot jelöl.
 
+Bontsuk az \texttt{OpenCL} programot négy részre:
+\begin{itemize}
+\item Előkészítés - Minden ami a kernel futása előtt történik.
+\item Kernel(ek) futása
+\item Eredmények kiolvasása
+\item Eredmények kezelése
+\end{itemize}
+A \texttt{Connector} programot pedig 3 részre
+\begin{itemize}
+\item Előkészítés - Minden ami a kernel futása előtt történik.
+\item Lekérdezés - A korában már említett két sor
+\item Eredmények kezelése
+\end{itemize}
+Az eredmény kezelése résznél azt vizsgáljuk melyik esetben gyorsabb az eredményeket fájlba írni.
+\newpage
 \SubSection{Egy táblás lekérdezés}
 
 \begin{python}
-SELECT * FROM speedtest_1048576 WHERE c3 = 1 AND c4 > 5001
+SELECT * FROM speedtest_1048576 WHERE c3 = 1 AND c4 > 5001;
+	5307 row(s) returned
+SELECT * FROM speedtest_1048576 WHERE c3 > 1 AND c4 > 5001;
+	514025 row(s) returned
 \end{python}
+Először vizsgáljuk meg azt, mennyi ideig tart a lekérdezés, ha a Connenctor -t használjuk.
 
-A Connector lekérdezési ideje: 178061 
+\begin{table}[h!]
+\centering
+\begin{tabular}{|p{6cm}|p{3cm}|p{3cm}|}
+\hline
+Sorok száma & 5307 & 514025 \\
+\hline\hline
+
+Előkészítés & 21237 $\mu s$ & 19125 $\mu s$ \\
+\hline
+
+Lekérdezés & 183674 $\mu s$ & 273130 $\mu s$ \\
+\hline
+
+Eredmény kiírás & 12591 $\mu s$ & 1110877 $\mu s$ \\
+\hline
+\end{tabular}
+\end{table}
+Ugyan ez indexeléssel:
+\begin{table}[h!]
+\centering
+\begin{tabular}{|p{6cm}|p{3cm}|p{3cm}|}
+\hline
+Sorok száma & 5307 & 514025 \\
+\hline
+\hline
+
+Előkészítés & 21483 $\mu s$ & 16573 $\mu s$ \\
+\hline
+
+Lekérdezés & 23979 $\mu s$ & 268184 $\mu s$ \\
+\hline
+
+Eredmény kiírás & 17009 $\mu s$ & 1087573 $\mu s$ \\
+\hline
+\end{tabular}
+\end{table}
+
+Illetve az \texttt{OpenCL} program használatakor:
+\begin{table}[h!]
+\centering
+\begin{tabular}{|p{6cm}|p{3cm}|p{3cm}|}
+\hline
+Sorok száma & 5307 & 514025 \\
+\hline
+\hline
+Előkészítés & 688786 $\mu s$ & 685148 $\mu s$ \\
+\hline
+Kernel futás & 1851 $\mu s$ & 2314 $\mu s$ \\
+\hline
+Eredmény kiolvasás & 2107 $\mu s$ & 2034 $\mu s$ \\
+\hline
+Eredmény kiírás & 11682 $\mu s$ & 929053 $\mu s$ \\
+\hline
+
+\end{tabular}
+\end{table}
+
+Láthatjuk, hogy összességében az OpenCL megvalósítás sokkal lassabb. De vegyük észre, hogy a program legtöbb részének csak egyszer kell lefutnia. 
+Több lekérdezés végezhető úgy, hogy csak a  kernel és eredménykiolvasás idejét kell többszörözni. Ezen kívül feltűnhet azt is, hogy a tömbben lévő adatokat kiírás szempontjából gyorsabban lehet kezelni.
+
+Ne feledjük azt sem, hogy a táblát utólag indexelni körülbelül 5,5 másodperce telt!
+
+A hatékonyságot a következő módon becsülhetjük:
+\begin{itemize}
+\item Az előkészítést egyszer vesszük figyelembe.
+\item Az előkészítési időhöz hozzá adjuk az ismétlődő részeket.
+
+Lekérdezés, kernel(ek) futása, eredmény kiolvasás, eredmény kiírás.
+
+\end{itemize}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=\textwidth]{images/test/where.png}
+\caption{Becslés csak a lekérdezésre.}
+\label{fig:schema}
+\end{figure}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=\textwidth]{images/test/where_write.png}
+\caption{Becslés az eredmények kiírásával.}
+\label{fig:schema}
+\end{figure}
+
+A mérésekből a következő következtetéseket vonhatjuk le:
+0.5\% os visszatérési arany esetében ha nincs indexelés, akkor 7 lekérdezés után megtérülhet az adatok mozgatási költsége.
+Ha van indexelés akkor ez a szám eléri a 37 -et.
+50\% -os visszatérési aránynál már a 2. lekérdezésnél is nyereséges az \texttt{OpenCL} -es megvalósítás. 
+
+A grafikonon a \texttt{CONN 500k} és \texttt{CONN500k i} szinte egymást fedi, amiből látjuk, hogy ha a válaszban visszatérő sorok száma magas, akkor az indexelés hatékonysága alacsony.
 
 
-Ezzel szemben az OpenCL megvalósítás.
+\newpage
+\SubSection{Két táblás lekérdezés}
+
 \begin{python}
-38      Read kernel file: Done.
-17227   Server connection: Done.
-264060  MySQL query: Done.
-316775  Copy to the arrays: Done.
-0       Define sizes: Done.
-96585   Define queue: Done.
-24      Create buffer: Done.
-6298    Write to the buffer: Done.
-21      Create the program: Done.
-1260    Build the program: Done.
-5       Createing kernel: Done
-1       Setting kernel arguments: Done.
-1917    Running the kernel: Done.
-2191    Reading the result: Done.
+SELECT TM.c1p1, TS.c1p1, TM.c3*TS.c3 FROM speed2.speed_262144 AS TM 
+JOIN speed2.speed_131072 AS TS ON (TM.fk_s = TS.c1p1) 
+WHERE TM.c3>9600 AND TS.c3>9200; 
+	839 row(s) returned
+WHERE TM.c3>9900 AND TS.c3>9900; 
+	16 row(s) returned
 \end{python}
 
-Ha a programot buildelni kell az ideje 1260 helyett 71396.
+Az \texttt{Connector} mérései.
 
-Bontsuk két szakaszra a programot.
-Felkészülés az adatfeldolgozásra. 
-$$ 38 + 17227 + 316755 + 96585 + 24 + 6298 + 21 + 1260 + 6 = 438214 $$
+\begin{table}[h!]
+\centering
+\begin{tabular}{|p{6cm}|p{3cm}|p{3cm}|}
+\hline
+Sorok száma & 16 & 839 \\
+\hline\hline
 
-Adatfeldolgozás és kimenetre küldés.
+Előkészítés & 21425 $\mu s$ & 21893 $\mu s$ \\
+\hline
 
-$$ 1917 + 2191 $$
+Lekérdezés & 39363 $\mu s$ & 85889 $\mu s$ \\
+\hline
+
+Eredmény kiírás & 90 $\mu s$ & 2120 $\mu s$ \\
+\hline
+
+\end{tabular}
+\end{table}
+
+Indexeléssel:
+\begin{table}[h!]
+\centering
+\begin{tabular}{|p{6cm}|p{3cm}|p{3cm}|}
+\hline
+Sorok száma & 16 & 839 \\
+\hline
+\hline
+
+Előkészítés & 20984 $\mu s$ & 26650 $\mu s$ \\
+\hline
+
+Lekérdezés & 10119 $\mu s$ & 31663 $\mu s$ \\
+\hline
+
+Eredmény kiírás & 97 $\mu s$ & 2802 $\mu s$ \\
+\hline
+
+\end{tabular}
+\end{table}
+
+OpenCL megvalósítás
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{|p{6cm}|p{3cm}|p{3cm}|}
+\hline
+Sorok száma & 16 & 839 \\
+\hline
+\hline
+Előkészítés & 333354 $\mu s$ & 329314 $\mu s$ \\
+\hline
+Kernel 1. 2. futása & 556 $\mu s$ & 561 $\mu s$ \\
+\hline
+Kernel 3. futása & 6912 $\mu s$ & 112407 $\mu s$ \\
+\hline
+Eredmény kiolvasás & 1842 $\mu s$ & 1962 $\mu s$ \\
+\hline
+Eredmény kiírás & 131 $\mu s$ & 1796 $\mu s$ \\
+\hline
+\end{tabular}
+\end{table}	
+
+Az \texttt{OpenCL} -es futási időket továbbá azzal igyekeztem optimalizálni, hogy a szerverről csak a szükséges oszlopokat kértem le, így elkerülve a fölösleges adatok mozgatását.
+
+\newpage
+\begin{figure}[h!]
+\centering
+\includegraphics[width=\textwidth]{images/test/join.png}
+\caption{Becslés csak a lekérdezésre.}
+\label{fig:schema}
+\end{figure}
+
+A méréseket látva, arra következtetésre juthatunk, hogy az \texttt{OpenCL} kód nem bizonyul hatékonynak, még ilyen alacsony találati számnál sem. A kiolvasási időt tovább lehetne optimalizálni az előzőekben említett másik módszerrel, ezzel akár tizedére is csökkenhet a kiolvasási idő, illetve minimálisan javulhat a kiírási idő is. Ez a kis számú lekérdezés annyira speciális esete lenne a lekérdezéseknek, hogy nem vizsgálom tovább.
+
+A táblakapcsolás nélküli lekérdezéshez képesti drámai teljesítmény romlás oka az hogy a \texttt{MySQL} motorja a táblák kapcsolásánál felhasználja a másodlagos kulcsokat mint index így nem kell végignéznie a táblát a párokat keresve.
+
+Valamilyen indexelési módszer használatával az \texttt{OpenCL} megvalósítás is optimalizálható lenne, ám ez bonyolult és költséges lehet.
+
+Az ábrán jól látható, hogy már 839 visszatérő sornál is a CL megvalósítás a leglassabb. A 16 soros lekérdezés pedig alig előzi meg az indexelt lekérdezést.
+Az eredményekből azt is látjuk, hogy nagyobb mértékben nőtt a futási ideje a CL programnak, azaz még több visszatérő sor eseten a módszer még kevésbé hatékony.
+
+
+
+%-Mysql nagyon hatékony
+%- Főleg ha kevéssel tér vissza és van index ésvagy join
+
+%- HDD lassabb lehet.
+%- Jobb videókártya lasabb CPU
+
+%- Globálisba dolgozunk de cache lenne jó
+
+

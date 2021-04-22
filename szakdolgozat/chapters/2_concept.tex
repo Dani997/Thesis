@@ -1,9 +1,8 @@
-\Chapter{A MySQL felépítése és működése}
+\Chapter{A MySQL telepítése forráskódból}
 
-\Section{Forráskód beszerzése és fordítás}
 
 A MySQL forráskódból való fordítását egy frissen telepített és naprakészre frissített Manjaro 20.2.1 es linux disztribúción végeztem el. Telepítés során non-free grafikus drivert választottam.
-A forrásállomány könnyedén elérhető a készítő hivatalos GitHub oldaláról, így azt gond nélkül klónoztam.
+A forrásállomány bárki számára elérhető, és a következő paranccsal klónozható:
 \begin{python}
  git clone https://github.com/mysql/mysql-server.git
 \end{python}
@@ -19,18 +18,20 @@ A fordítás sikerességéhez rendszerenként eltérő csomagok telepítésére 
  $ sudo pacman -S bison
 \end{python}%$
 %A \textit{Boost} függvénykönyvtár később kapcsoló használatával letölthető.
-A következő lépés a CMake futtatása.
-Ehhez létre kell hozni egy mappát ahhová az új állományok létrejöhetnek. Ez a lépés kihagyható, a CMake javasolja az új mappát, de felajánlja a kapcsolót a kihagyásra.
+A következő lépés a CMake futtatása. Ehhez célszerű létrehozni egy mappát ahová az új állományok létrejöhetnek. Ezt nem kötelező megtenni, a forrás könyvtárban is ki lehet adni a parancsot, ehhez a \texttt{CMake} megfogja adni a szükséges kapcsolót illetve figyelmeztet arra, hogy nem ajánlatos.
 \begin{python}
  mkdir build
 \end{python}
-A forrás mappájában futtathatjuk a következő parancsot:
+Amint ez kész a forrás mappájában futtathatjuk a következő parancsot:
 \begin{python}
  cmake ./ ../build -DDOWNLOAD_BOOST=1 -DWITH_BOOST=../boost/
 \end{python}
-A kapcsoló megadásával a boost könyvtár letöltődik a megadott helyre és a CMake megjegyez. Ha a generátor hibátba ütközik a szükséges csomagokat telepíteni kell és a \textit{CMakeCache.txt} fájlt törtölni. Ezek után a CMake újra futtatahtó, de már a \textit{Boost} -hoz tartozó kapcsolók nélkül
+A megadott kapcsolóval a boost könyvtár letöltődik a megadott helyre és a \texttt{CMake} megjegyez ezt. Ha a generátor hibába ütközik a szükséges csomagokat telepíteni kell és a \textit{CMakeCache.txt} fájlt törtölni. Ezek után a \texttt{CMake} újra futtatható, de már a \textit{Boost} -hoz tartozó kapcsolók nélkül.
+
 A sikeres futás jelzi, hogy minden készen áll a fordításra, nincs hiányzó csomag.
- A \texttt{make} parancs futtatása következik. Ez egy hosszú folyamat, jelen konfiguráción 120 percet vett igénybe. A sikeres fordítást követően létre kell hoznunk egy data mappát a szerver számára.
+A \texttt{make} parancs futtatása következik. Ez egy hosszú folyamat, jelen konfiguráción 120 percet vett igénybe. 
+
+A sikeres fordítást követően létre kell hoznunk egy data mappát a szerver számára.
 \begin{python}
  mkdir data
 \end{python}
@@ -42,7 +43,6 @@ Ekkor kapunk egy jelszót az a szerverre való csatlakozáshoz. Következő futt
 \begin{python}
  sudo chmod -R 777 ./data
 \end{python}
-
 Ezután futtathatjuk a szervert
 \texttt{./bin/mysqld}
 Vagy telepíthetjük is azt a \texttt{make install} paranccsal, de ez jelen esetben szükségtelen.
