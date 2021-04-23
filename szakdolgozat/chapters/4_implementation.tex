@@ -1,31 +1,30 @@
 \Chapter{A MySQL Connector}
 
-\Section{Ismertető}
-A MySQL Connector egy MySQL alapú driver JDBC, ODBC, és .NET rendszerek számára. Lehetővé teszi, hogy a fejlesztők adatbázis alkalmazásokat írjanak a támogatott nyelveken. Ezen kívül egy natív C könyvtár teszi lehetővé, hogy a MySQL-t közvetlenül beágyazhassák az alkalmazásaikba.
-MySQL által fejlesztett driver -ek:
-ADO.NET, ODBC, JDBC, Node.js, Python, C++, C és C API a a klienshez. 
-A MySQL közösség által fejlesztetek:
-PHP, Perl, Ruby, C+ Wrapper.
+A \texttt{Connector}, \texttt{MySQL} alapszabványú drivereket biztosít különböző nyelveken, amelyek lehetővé teszik a fejlesztők számára, hogy adatbázis alkalmazásokat írjanak a támogatott nyelveken. Ezen kívül egy natív C könyvtár teszi lehetővé azt, hogy a \texttt{MySQL} -t közvetlenül beágyazhassák alkalmazásaikba. \newline
+A következő \texttt{MySQL} által fejlesztett driverek érhetőek el: \newline
+\texttt{ADO.NET}, \texttt{ODBC}, \texttt{JDBC}, \texttt{Node.js}, \texttt{Python}, \texttt{C++}, \texttt{C} és \texttt{C API} a klienshez. \newline
+Az alábbiakat pedig a \texttt{MySQL} közössége fejleszti:\newline
+\texttt{PHP}, \texttt{Perl}, \texttt{Ruby}, \texttt{C+ Wrapper}.
 
 *https://www.mysql.com/products/connector/
 
 \Section{A Connector/C++ használata}
 
-Az alábbi weboldalról letöltött állományokat használtam:\newline
+Az állományok letölthetőek a készítő hivatalos weboldaláról:\newline
 https://dev.mysql.com/downloads/connector/cpp/
 \begin{itemize}
 \item Linux - Generic
 \item All
 \item Linux - Generic (glibc 2.12) (x86, 64-bit), Compressed TAR Archive
 \end{itemize}
+Letöltés után kicsomagoljuk. A tartalma egy \texttt{include} és egy \texttt{lib64} mappa. Az \texttt{include} mappa tartalmát a \texttt{usr/include} könyvtárba másoljuk, a \texttt{lib64} -ét pedig az \texttt{usr/lib64} mappába.
 
-Letöltés után kicsomagoljuk. A tartalma egy include és egy lib64 mappa. Az include mappa tartalmát a usr/include könyvtárba másoljuk, a lib64 -ét pedig az usr/lib64 mappába.
-
-Ezután szükség lesz egy külön felhasználóra amellyel a program csatlakozni fog a szerverünkre. Ezt megtehetjük a Workbench alkalmazásban.
+Ezután szükség lesz egy külön felhasználóra amellyel a program csatlakozni fog a szerverünkre. Ezt létrehozhatjuk a \texttt{Workbench} alkalmazásban is.
 \begin{python}
 CREATE USER 'newuser'@'localhost' IDENTIFIED BY 'password';
 \end{python}
 
+\newpage
 \Section{Első program}
 
 Hozzunk létre egy \texttt{connectortest.cpp} nevű fájlt.
@@ -43,15 +42,13 @@ driver = get_driver_instance();
 con = driver->connect("tcp://192.168.0.43:3306", "program", "a");
 con->setSchema("thesis");
 \end{cpp}
-Utasítás létrehozása SQL parancsból:
+A következő két sor maga a lekérdezés. Az első utasítás elkészíti a szövegből a szerver számára is értelmezhető utasítást, a második sor pedig elküldi azt a szervernek és megvárja a választ:
 \begin{cpp}
 pstmt = con->prepareStatement("SELECT * FROM T3");
-\end{cpp}
-Az utasítás elküldése a szervernek. Ez a sor maga a lekérdezés, itt tudjuk mérni annak idejét is.
-\begin{cpp}
 res = pstmt->executeQuery();
 \end{cpp}
-Az eredményt a szemléltetett módon lehet kiolvasni:
+
+Az eredményt a \texttt{res} objektumon végig lépkedve tudjuk kiolvasni, a lekért oszlop nevének megadásával és a típusnak megfelelő \texttt{get} függvénynél.
 \begin{cpp}
  while (res->next())
       cout << res->getInt("c1p3") << "\t" << res->getInt("c2") << "\t"
@@ -59,8 +56,7 @@ Az eredményt a szemléltetett módon lehet kiolvasni:
            << res->getInt("fk_p1_p3") << "\t" << res->getInt("fk_p2_p3") 
            << endl;
 \end{cpp}
-
-Lekérdezés után fontos törölni az eredményhalmazt és az elkészített utasítást, ugyanis ezek memóriát foglalnak, és több lekérdezés esetén a lekérdezés halmaz megtöltheti a teljes memóriát is. 
+Lekérdezés után fontos törölni az eredményhalmazt és az elkészített utasítást, ugyanis ezek memóriát foglalnak, és több lekérdezés esetén megtelhet akár a teljes memória is.
 \begin{cpp}
     delete res;
     delete pstmt;
@@ -75,21 +71,21 @@ g++ -D_GLIBCXX_USE_CXX11_ABI=0 connectortest.cpp -o connectortest.out
 
 \Chapter{Párhuzamosítási lehetőségek}
 
-\Section{Az OpenCL nyelv}
+\Section{Az \texttt{OpenCL} nyelv}
 
 Open Computing Language egy keretrendszer amely lehetőséget ad olyan programok írására amelyek különböző platformokon is futtathatóak.
-Az OpenCL meghatároz egy programozási nyelvet az eszközök és API-k számára a platformok vezérléséhez és a számítások végrehajtásához az eszközökön. Szabványos interfészt biztosít a párhuzamos számításokhoz, melyhez adatalapú és feladatalapú párhuzamosítást használ.
+Az \texttt{OpenCL} meghatároz egy programozási nyelvet az eszközök és API-k számára a platformok vezérléséhez és a számítások végrehajtásához az eszközökön. Szabványos interfészt biztosít a párhuzamos számításokhoz, melyekhez adatalapú és feladatalapú párhuzamosítást használ.
 
-Fontos észrevenni, hogy az OpenCL natív módon képes beszélni az eszközök nagy részével, ez nem azt jelenti, hogy a kód optimálisan fog futni. Ugyanis különböző Cl eszközök különböző funkciókkal vannak ellátva. Gyártó specifikus kiterjesztések elkerülésével a kód hordozható lesz, de nem sebesség optimális.
+Fontos észrevenni, hogy az \texttt{OpenCL} natív módon képes beszélni az eszközök nagy részével, de ez nem azt jelenti, hogy a kód optimálisan fog futni. Ugyanis különböző \texttt{CL} eszközök különböző funkciókkal vannak ellátva. Gyártó specifikus kiterjesztések elkerülésével a kód hordozható lesz, de nem sebesség optimális.
 
 \begin{figure}[h!]
 \centering
 \includegraphics[width=\textwidth]{images/opencl.png}
-\caption{OpenCL}
+\caption{\texttt{OpenCL}}
 \label{fig:opencl}
 \end{figure}
 
-A következő esetekben a GPU-t érdemes használni.
+A következő esetekben a GPU-t érdemes használni:
 \begin{itemize}
 \item Gyors permutáció: Az eszközök gyorsabban mozgatáják a memóriát mint a Host.
 \item Adat átváltás: Egyik formátumról másikra.
@@ -98,9 +94,9 @@ A következő esetekben a GPU-t érdemes használni.
 Jelen esetben a Host egy asztali számítógép.
 Számítási eszközei: CPU, GPU, FPGA, DSP.
 A számítási egységek: a magok száma
-Elemek feldolgozása: ALU-k magunként.
+Elemek feldolgozása: ALU magonként.
 
-OpenCL használata mellett szükségtelen gondolkozni azon, hogy pontosan mi is végzi el a számításokat. Ugyanis az OpenCL modelljének illeszkedése egy adott hardverhez, a gyártók feladata.
+\texttt{OpenCL} használata mellett szükségtelen gondolkozni azon, hogy pontosan mi is végzi el a számításokat. Ugyanis az \texttt{OpenCL} modelljének illeszkedése egy adott hardverhez, a gyártók feladata.
 
 \begin{table}[h!]
 \centering
@@ -145,7 +141,7 @@ Az újabb CPU-k több párhuzamosításra képesek & Újabb GPU-k
 \begin{figure}[h!]
 \centering
 \includegraphics[width=\textwidth]{images/device.png}
-\caption{OpenCL eszköz modell}
+\caption{\texttt{OpenCL} eszköz modell}
 \label{fig:opencl}
 \end{figure}
 
@@ -156,11 +152,11 @@ Négy féle memóriát különböztetünk meg:
 \item Lokális memória: Minden számási egység számára privát, de megosztott a feldolgozó elemek között.
 \item Privát memória: Gyorsabb a lokálisnál, minden feldolgozó elemnek van.
 \end{itemize} 
-A konstans, lokális és privát memóriába nem lehet adatokat menteni úgy, hogy más kernel használhassa majd azt
+A konstans, lokális és privát memóriába nem lehet adatokat menteni úgy, hogy más kernel használhassa majd azt.
 
 \SubSection{Feldolgozási modell}
 
-A Host -on OpenCL alkalmazások futnak amelyek a számítási eszközökhöz küldik a munkát.
+A Host -on \texttt{OpenCL} alkalmazások futnak amelyek a számítási eszközökhöz küldik a munkát.
 \begin{itemize}
 \item Munkaelem: A számítási eszköz alapvető egysége.
 \item Kernel: A kód, ami fut a munkaegységen  (Alap C függvények)
@@ -177,7 +173,6 @@ Amire ehhez szükség van:
 \item Globális eltolás.
 \item Munkacsoport méret.
 \end{itemize}
-
 Megfeleltetés:
 \begin{itemize}
 \item Munkaelem - számítási elem: Minden munkaelemet egy számítási elem hajt végre.
@@ -187,21 +182,22 @@ Megfeleltetés:
 
 \SubSection{Munkacsoportok}
 
-Ideális esetben végtelen számú feldolgozási elemmel rendelkezik az eszköz, Minden ilyen elem az adatok egy részét kezeli anélkül, hogy szükségük lenne kommunikációra. De ez nem így szokott lenni, ezért a munkát fel kell osztani.
+Ideális esetben végtelen számú feldolgozási elemmel rendelkezik az eszköz, Minden ilyen elem az adatok egy részét kezeli anélkül, hogy szükségük lenne kommunikációra. De ez a gyakorlatban nem szokott ilyen egyszerű lenni, ezért a munkát fel kell osztani.
 \begin{itemize}
 \item A teljes munkát fel kell osztani kisebb darabokra.
 \item Minden darab egy munkacsoporthoz tartozik.
 \item A munkacsoportokat ütemezéssel kell végrehajtani a számítási egységeken.
 \item Minden csoport rendelkezik egy megosztott memóriával, ami olyan mint a lokális memória a számítási-egységeknél
 \end{itemize}
+A folytatáshoz a munkacsoportokat ütemezni kell a végrehajtási egységeken, és a munkaelemeket számítási egységen belül végrehajtani.
+Minden munkaelem társulni fog egy számítási egységhez, ha van elegendő. Ezt a folyamatot az \texttt{OpenCL} végzi, csak meg kell adni a globális munkaméretet és munkacsoport méretet. A kernelt indító függvény a  munkacsoportok számát kiszámolja. Ha nincs elég számítási egység, akkor a munkacsoportok sorban hajtódnak végre a meglévő egységeken.
 
-A folytatáshoz a munkacsoportokat ütemezni kell a végrehajtási egységeken, és a munkaelemeket számítási-egységen belül végrehajtani.
-Minden munkaelem társulni fog egy számítási egységhez, ha van elegendő. Ezt a folyamatot az OpenCL végzi, csak meg kell adni a globális munkaméretet és munkacsoport méretet. A kernelt indító függvény a  munkacsoportok számát kiszámolja. Ha nincs elég számítási egység, akkor a munkacsoportok sorban hajtódnak végre a meglévő egységeken.
-
-\SubSection{OpenCL program általános felépítése}
+\SubSection{\texttt{OpenCL} program általános felépítése}
 \begin{itemize}
-\item Definiálni kell a platformot és a parancssort.
-\item Definiálni kell a szükséges memória objektumokat.
+\item Létre kell hozni egy szöveg típusú változót, ami tartalmazza a kernel kódot.
+\item Definiálni kell az eszközt, kontextust és parancssort.
+\item Definiálni kell a szükséges memória puffereket.
+\item Az adatokat be kell másolni a pufferekbe.
 \item Létre kell hozni a programot a szövegből.
 \item Fel kell építeni a programot.
 \item Létre kell hozni a kernelt és be kell állítani a paramétereit.
@@ -211,7 +207,7 @@ Minden munkaelem társulni fog egy számítási egységhez, ha van elegendő. Ez
 \end{itemize}
 
 
-\Section{Az OpenCL telepítése}
+\SubSection{Az \texttt{OpenCL} telepítése}
 
 A megfelelő működéshez az első lépést már a rendszer telepítésénél megtettem amikor a non-free avagy az nvidia eredeti drivernének a telepítését választottam.
 ezen kívül a következő csomagokra volt szükség: 
@@ -223,14 +219,16 @@ $ sudo pacman -S cuda
 $ sudo pacman -S ocl-icd
 \end{python}
 
-\Section{Az OpenCL használata}
 
 \Chapter{Megvalósítás}
-\Section{Bevezetés}
-Az alap ötlet egyszerű. A MySQL szerverről lekérjük a tábla tartalmát, amit be másolunk az OpenCL pufferébe, majd a kernelkód futtatása után az eredményt tartalmazó részeket kiolvassuk. De felvetődik pár problémás rész. Hogyan tároljuk a tábla tartalmát? Mekkora legyen a Globális munkaméret és a munkacsoport méret? Milyen formában állítsuk elő az eredményt, és hogyan olvassuk azt ki?
+
+Az alap ötlet egyszerű. A MySQL szerverről lekérjük a tábla tartalmát, amit be másolunk az \texttt{OpenCL} pufferébe, majd a kernelkód futtatása után az eredményt tartalmazó részeket kiolvassuk. De felvetődik pár problémás rész. Hogyan tároljuk a tábla tartalmát? Mekkora legyen a Globális munkaméret és a munkacsoport méret? Milyen formában állítsuk elő az eredményt, és hogyan olvassuk azt ki?
+
+
+\Section{Adatok megszerzése}
 
 \SubSection{Táblák tömbbé alakítása}
-Ahhoz, hogy OpenCL el kezelni tudjuk az adatokat először szükség lesz egy struktúrára ami reprezentálja az adatbázis tábla felépítését. Az az a struktúra adattagjainak típusa egyezzen meg a táblázat oszlopainak típusával. Ezek után ebből létre kell hoznunk egy tömböt melynek hossza legalább annyi, mint a tábla sorainak száma.
+Ahhoz, hogy \texttt{OpenCL} el kezelni tudjuk az adatokat először szükség lesz egy struktúrára ami reprezentálja az adatbázis tábla felépítését. Az az a struktúra adattagjainak típusa egyezzen meg a táblázat oszlopainak típusával. Ezek után ebből létre kell hoznunk egy tömböt melynek hossza legalább annyi, mint a tábla sorainak száma.
 
 \begin{figure}[h!]
 \centering
@@ -249,9 +247,11 @@ Ahhoz, hogy OpenCL el kezelni tudjuk az adatokat először szükség lesz egy st
 \newpage
 \SubSection{A táblákat beolvasó függvény.}
 
-A táblák sorainak száma változó lehet, ezért a programot igyekeztem úgy megírni, hogy alkalmazkodjon közel bármilyen táblamérethez.
-Első lépésben létrehozok egy Pointert ami a táblára fog mutatni, és ehhez egy változót ami a méretét tárolja. Az adatbázis lekérő függvénynek átadom ezeket.
-Miután a Connector elvégezte a lekérdezést beállítom a méret változó értékét és a tábla memória területét csak ekkor foglalom le. A kettős indirektségnek köszönhetően a főprogramban lévő *t1 pointer beállítható, hogy a megfelelő címre mutasson, illetve a függvényből feltölthető.
+A fix sorszámmal rendelkező adatbázis táblák kezelése egy nagyon speciális eset lenne, ezért a programot úgy kell megírni, hogy igazodni tudjon a különböző táblaméretekhez.
+
+Mivel a tábla méret előre nem ismert ezért a változó helyét a \texttt{malloc} függvénnyel kell lefoglalni. De mivel a lekérdezést külön függvény végzi, és a méretet sem tudjuk előre, ezért a következő megoldást alkalmazom:
+Első lépésben létrehozok egy pointert ami később a táblára fog mutatni, most még \texttt{NULL} értékű, és ehhez egy változót ami a méretét tárolja. Az adatokat lekérő függvénynek átadom ezeket, és miután a \texttt{Connector} elvégezte a lekérdezést beállítom a méret változó értékét illetve a tábla memória területét csak ekkor foglalom le, és állítom rá a pointert. Ez úgy lehetséges, hogy a függvénynek egy pointerre mutató pointert adok át és ezáltal kettős indirektség jön létre.
+
 \begin{cpp}
 Table1Type *t1 = NULL;
 int t1_size;
@@ -265,22 +265,17 @@ res = pstmt->executeQuery();
 \caption{Pointerek a létrehozáskor}
 \label{fig:opencl}
 \end{figure}
-
 \begin{cpp}
 int i = 0;
 *T1_size = res->rowsCount();
 *T1 = (Table1Type*) malloc(sizeof(Table1Type) * *T1_size);
 
-while (res->next())
-{
-	T1[0][i].c1p1 = res->getInt("c1p1");
-	T1[0][i].c2 = res->getInt("c2");
-	T1[0][i].c3 = res->getInt("c3");
-	T1[0][i].c4 = res->getInt("c4");
-	i++;
+while (res->next()) {
+  T1[0][i].c1p1 = res->getInt("c1p1"); T1[0][i].c2 = res->getInt("c2");
+  T1[0][i].c3 = res->getInt("c3"); T1[0][i].c4 = res->getInt("c4");
+  i++;
 }
 \end{cpp}
-
 \begin{figure}[h!]
 \centering
 \includegraphics[width=\textwidth]{images/implementation/pointer_02.png}
@@ -291,23 +286,21 @@ while (res->next())
 \Section{Globális és lokális méret meghatározása}
 Ennél a pontnál oda kell figyelni pár alapvető dologra:
 \begin{itemize}
-\item A globális méret korlátlan.
-\item A lokális méret avagy munkaelemek száma egy munkacsoportban legfeljebb 1024 lehet.
+\item A lokális méret legfeljebb 1024 lehet.
 \item A globális méretnek a lokális többszörösének kell lennie.
 \item A túl sok vagy túl kevés munkacsoport használata esetén a párhuzamosság sérül.
-\item Több munkacsoport dolgozik párhuzamosan egymás mellett.
-\item Munkacsoporton belül a munkaelemek feldolgozása bizonyos elemszámig párhuzamos.
+\item A munkacsoportok és csoporton belül a munkaelemek feldolgozása párhuzamos.
 \item Munkacsoportok között nem lehetséges szinkronizáció, csak munka elemek között, amennyiben azok egy munkacsoportba tartoznak.
-\item Nem használható kölcsönös kizárás, a szemafor végtelen ciklust okoz.
+\item Nem használható kölcsönös kizárás, a szemafor végtelen ciklushoz vezet.
 \end{itemize}
 
 \SubSection{Működési elv}
 
-Egyszerű esetben a bementi elemszámot megadhatjuk mint globális méret, ez gyakorlatban megadja, hogy hányszor fog lefutni a kernel függvény. A $get\_global\_id(0)$ meghívásával megkapjuk az aktuális azonosítót, ez 0 -tól globális méret -1 ig terjed. Innentől tekinthetünk a teljes kódra úgy, mintha egy párhuzamos futó \texttt{for} ciklusban lenne.
+Egyszerű esetben a bementi elemszámot megadhatjuk mint globális méret, ez gyakorlatban meghatározza, hogy hányszor fog lefutni a kernel függvény. A $get\_global\_id(0)$ meghívásával megkapjuk az aktuális azonosítót, ez 0 -tól globális méret -1 ig terjed. Innentől tekinthetünk a teljes kódra úgy, mintha egy párhuzamos futó \texttt{for} ciklusban lenne.
 
-Ezen kívül meg kell adnunk a lokális méretet, ami az elemek száma egy munkacsoporton belül. A kernel futása közben ezt is megkaphatjuk a $get\_local\_id(0)$ használatával, csak úgy mint a munkacsoport azonosítót vagy az említett paraméterek teljes elemszámát.
+Ezen kívül meg kell adnunk a lokális méretet, ami az elemek száma egy munkacsoporton belül. A kernel futása közben ezt is megkaphatjuk a $get\_local\_id(0)$ használatával, csak úgy mint a munkacsoport azonosítót vagy az említett paraméterek méretét.
 
-A végeredményt tartalmazó kimeneti tömb hossza egyezik a globális mérettel, így nem ütközhetünk bele abba a hibába, hogy két számítási elem ugyan oda próbáljon írni. Amennyiben például a 545. elem megfelel, akkor az indexe és egyéb hozzá tartozó értékek az 545. helyen lesznek a kimeneti tömbben.
+A végeredményt tartalmazó kimeneti tömb hossza egyezik a globális mérettel, így nem ütközhetünk bele abba a hibába, hogy két számítási elem ugyan oda próbáljon írni. Amennyiben például az 545. elem megfelel, akkor az indexe és egyéb hozzá tartozó értékek az 545. helyen lesznek a kimeneti tömbben.
 
 \begin{figure}[h!]
 \centering
@@ -316,28 +309,25 @@ A végeredményt tartalmazó kimeneti tömb hossza egyezik a globális mérettel
 \label{fig:opencl}
 \end{figure}
 
-\SubSection{Globális méret meghatározása}
-Tegyünk fel, hogy kaptunk egy 1048547 sorból álló táblázatot.
-Olyan lokális méretet kell megadni, ami ennek osztója, láthatjuk, hogy a meghatározása problémás.
-Erre megoldást jelent ha a lokális méretet előre beállítjuk például 1024 -re, majd a globális méretet ebből és a sorok számából kiszámítjuk.
-Ezt úgy tehetjük meg, hogy a sorok számához hozzáadjuk a legkisebb olyan számot amellyel az összeg oszthatóvá válik a lokális mérettel.
-Így azt kapjuk, hogy a globális méret 1049600, ami azt jelenti, hogy 1025 munkacsoport jön létre. 
+\newpage
 
-Viszont látjuk, hogy a lokális méret korlátai miatt szükség lehet arra, hogy valamilyen egyéb módon csökkentsük a munkacsoportok számát.
-Mondjuk azt, hogy egy munkaegység ne csak egy elemén dolgozzon a tömbnek, hanem egy intervallumán.
-Határozzuk meg a méreteket a következők alapján:
+\SubSection{Globális méret meghatározása}
+Tegyünk fel, hogy kaptunk egy 1048547 sorból álló táblázatot. Ekkor több probléma is előkerül. Egyrészt olyan lokális méretet kell választani ami ennek a számnak az osztója. Másfelől nem szeretnénk végignézni az ugyan ilyen hosszú kimeneti tömböt az eredmények helyét keresve.
+
+A következő módon oldottam meg a problémát: Állítsuk a globális méretet például 1024 -re, ehhez határozzunk meg egy intervallum méretet a sorok száma és globális méret hányadosának felső egész része ként. Ez jelen esetben szintén 1024 lesz. Viszont így át kell adnunk a kernelnek a tábla méretét, ami felső határként ügyel arra, hogy ne lépjük túl a méretét.
+
+A módosításnak az lesz a következménye, hogy egy munkaelem nem csak a tömb egy elemén fog dolgozni hanem egy intervallumán. Ezzel létrehoztunk olyan részeket a tömbben amiknek a feldolgozása biztosan soros lesz. Ennek köszönhetően már tudunk használni számlálókat, nincs szükség kölcsönös kizárásra. A számlálókat tartalmazó tömb mérete megegyezik a globális mérettel.
+
+Ezekhez a paraméterekhez még tetszőlegesen meg kell határozni a lokális méretet, aminek csak a teljesítményre van hatása.
+
 
 $$ global\_size = 1024 $$
 $$interval\_size =  \left\lfloor \frac{table\_size }{globalsize\_size} \right\rfloor  +1  $$
 
-Ezzel elértük, hogy a munkacsoportok száma drasztikusan csökkenjen. Illetve egy másik fontos előnyre is szert tettünk, ami az eredmények számlálása illetve kiolvasása során lesz jelentős.
 
 \SubSection{A kernelkód működése}
 
-Annak köszönhetően, hogy a tömböt intervallumokra bontottuk az elemeire nézve soros feldolgozási darabok jöttek létre. Ezeken az intervallumokon már 
-használhatunk számlálókat. Ennek az lesz a következménye, hogy nem csak a kimeneti tömböt kell kiolvasni, aminek mérete továbbra is megegyezik a táblázat sorainak számával, de a számlálókat tartalmazó tömböt is.
-De vegyük észre, hogy legfeljebb csak a gyökével nőtt az eredetileg kiolvasandó méret, és a kimeneten pontosan tudjuk, hol vannak az adatok.
-
+A kernel meghatározza saját globális azonosítóját és ebből illetve a kapott intervallum méretből meghatározza, honnan kezdőik az ő része a be-, és kimeneten. Ezután elkezdi az intervallumnyi elem megvizsgálását ügyelve arra, hogy a tábla méretet ne lépje túl. Amennyiben egy elem megfelel a szűrési paramétereknek annak indexét és egyéb lekérdezés függő kiszámolt értékeit a kimeneti tömbbe másolja, majd növeli saját számlálóját. Ez a számláló határozza meg, hogy a hozzátartozó kimeneti részen hányadik helyre írja az értékeket.
 \begin{figure}[h!]
 \centering
 \includegraphics[width=\textwidth]{images/itemgroup_black.png}
@@ -345,12 +335,11 @@ De vegyük észre, hogy legfeljebb csak a gyökével nőtt az eredetileg kiolvas
 \label{fig:opencl}
 \end{figure}
 
-A számítási elemek egy intervallumon dolgoznak és továbbra is munkacsoportokba vannak bontva de ez a működésre nincs hatással, legfeljebb a teljesítményre.
+\newpage
+\SubSection{Az elemek kiolvasása egyszerűen}
+A kernelkód működéséből látjuk, hogy több módszert is tudunk alkalmazni az elemek kiolvasására. A találatok számát tartalmazó tömböt biztosan ki kell másolnunk, de kimenetre vonatkozóan választhatunk az alábbi lehetőségekből:
 
-\SubSection{Az elemek kiolvasása}
-A kernelkód működéséből látjuk, hogy több módszert is tudunk alkalmazni az elemek kiolvasására. A találatok számát tartalmazó tömböt biztosan ki kell másolnunk.
-
-Választhatjuk azt, hogy kimásoljuk a teljes kimenetet, ekkor annak olvasása a következő algoritmus alapján zajlik:
+Dönthetünk úgy, hogy kimásoljuk a teljes kimenetet, ekkor annak konzolra való kiírása a következő algoritmus alapján zajlik:
 \begin{python}
 for(i=0; i< global_size; i++)
 {
@@ -360,14 +349,22 @@ for(i=0; i< global_size; i++)
   cout << t1[ result[ offset + j ].index ].c1p1 << endl;
 }
 \end{python}
-Végig kell menni a számlálón aminek hossza \texttt{global size}, majd a \texttt{ i * global size} eltolást használva annyi elemet kell sorban kiolvasni az adott részről, amekkora érték a számlálóban található. Ezzel ugrálva végig tudunk futni a kimeneten és ki tudjuk olvasni az indexeket illetve kiszámított értékeket.
+Végig kell menni a számlálón aminek hossza \texttt{global size}, majd az \texttt{ i * interval size} eltolást használva annyi elemet kell sorban kiolvasni az adott részről, amekkora érték a hozzá tartozó számlálóban található. Ezzel végig lépkedve és ugrálva a kimeneten ki tudjuk olvasni az indexeket illetve kiszámított értékeket.
 
-Ezen kívül megtehetjük azt is, hogy már a kiolvasásnál kihagyjuk az értékes információt nem tartalmazó részeket.
+\SubSection{Az elemek kiolvasása szakaszosan}
+A másik módszer, hogy csak az információkat tartalmazó részeket olvassuk a pufferekből. Ez hasonló módon zajlik, mint előző esetben az eredmények kiírása.
+
 \begin{python}
+int count = 0;
+for(int i=0; i< global_size; i++)
+ {
+ if(result_counter[i] < 1 ) continue; 
 clStatus = clEnqueueReadBuffer(command_queue, TableResult_clmem, CL_TRUE, 
 	i*interval_size * sizeof(TableResultType),
 	result_counter[i]* sizeof(TableResultType), 
 	&result[count]  , 0, NULL, NULL);
+	count+=result_counter[i];
+ }
 \end{python}
 
 Kiolvasásnál megadjuk az eltolást amit az előző módon számolunk annyi különbséggel, hogy megadjuk egy elem memória méretét:
@@ -391,7 +388,7 @@ Az egy táblára vonatkozó kernelek futtatása után az összekapcsolást végz
 \begin{figure}[h!]
 \centering
 \includegraphics[width=12cm]{images/join_kernels.png}
-\caption{OpenCL}
+\caption{\texttt{OpenCL}}
 \label{fig:opencl}
 \end{figure}
 
