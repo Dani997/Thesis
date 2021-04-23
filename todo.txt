@@ -20,3 +20,5 @@ Globális méret javítva mérések alapján
 + Konklúzió
   Hány Where lekérdezés kell, hogy megérje az adatokat GPU-nak adni?
   Kapcsolásnál bizonyos szűrési mérték felett a gpu sebessége legyőzi az indecxelés előnyeit?
+
+EXPLAIN utolsó két ábra T3 helyett T1 kell!!!
