@@ -1,11 +1,11 @@
 \Chapter{Mérések, összehasonlítások}
 
-Ebben a fejezetben megvizsgáljuk a program különböző részeit futás idő szempontjából. Egyes programrészeket ideje konstans az az nem függ az adatok mennyiségétől, így ezek ideje csak a fejezet végén, a gyakorlati példáknál kerülnek feltüntetésre. Első sorban nézzük azokat a részeket amelyek nagyban függnek a táblamérettől vagy az előállítani kívánt kimenettől.  
+Ebben a fejezetben megvizsgáljuk a program különböző részeit futási idő szempontjából. Első sorban nézzük azokat a részeket amelyek nagyban függnek a táblamérettől vagy az előállítani kívánt kimenettől.  
 
+\Section{Adatok mozgatásának sebességei}
 
-\Section{Adatok előkészítése}
-
-Itt vizsgáljuk részletesen azt, mennyi idő eljuttatni az adatokat a \texttt{MySQL} szerverről a videokártya puffereibe. Sejteni lehet, hogy a legtöbb értékes időt itt veszíthetjük el.
+Ebben a részben azt vizsgálom, mennyi idő eljuttatni az adatokat a \texttt{MySQL} szerverről a memóriába, azokat pufferekbe másolni majd onnan az eredményeket vissza ki.
+Annak érdekében, hogy az eredmények pontosabbak legyenek, minden eredmény 5 futás átlaga.
 
 \SubSection{A MySQL lekérdezés sebessége}
 Ezt a sebességet a következő két sor vizsgálatával kaphatjuk meg a legpontosabban:
@@ -13,21 +13,19 @@ Ezt a sebességet a következő két sor vizsgálatával kaphatjuk meg a legpont
 pstmt = con->prepareStatement(command);
 res = pstmt->executeQuery();
 \end{python}
-Ahhol \texttt{command} egy \texttt{String} az SQL parancs és a következő módon áll össze:
+A  \texttt{res} és \texttt{pstmt} törlése időméréskor nagyon fontos, ugyanis ennek kihagyása miatt a memória megtelhet!
+\texttt{Command} egy \texttt{String} az \texttt{SQL} parancs és a következő módon áll össze:
 \begin{python}
 range=32768;
-    while(i <= 1048576){
-    		command = "SELECT * FROM speedtest_1048576 Limit " 
-    			+ to_string(i);
-    		. . .
-   	 	i+=range;
-    }
+while(i <= 1048576){
+   command = "SELECT * FROM speedtest_1048576 Limit "  + to_string(i);
+   ...; i+=range; }
 \end{python}
-Ezen kívül a grafikonon látható tüskék mértékének csökkentése érdekében minden lekérdezést 5x futtattam és idejüket átlagoltam.
+
 \begin{itemize}
 \item A LIMIT hozzáadása a lekérdezéshez nem növeli annak idejét.
 \item A tábla tartalmaz elsődleges kulcsot, enélkül a lekérdezések ideje nő.
-\item A lekérdendő oszlopokat manuálisan módosítottam a programban. 
+\item A lekérdendő oszlopokat manuálisan módosítottam a programban: 
 \begin{itemize} 
 \item \texttt{SELECT c1p1 FROM ...}
 \item \texttt{SELECT c1p1, c2 FROM ...} 
@@ -38,13 +36,13 @@ Ezen kívül a grafikonon látható tüskék mértékének csökkentése érdek�
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=\textwidth]{images/sqlquery.png}
+\includegraphics[width=\textwidth]{images/graph/sqlquery.png}
 \caption{Az SQL lekérdezési sebessége}
 \label{fig:schema}
 \end{figure}
 %BETŰMÉRET NAGYÍTÁSRA SZORUL
 Az ábrán, egyértelműen látható, hogy a sorok számának növekedésével az idő is lineárisan nő.
-Jelmagyarázatnál látható egyenes egyenletekből becsléseket lehet készíteni adott paraméterekkel rendelkező szűrés nélküli lekérdezéshez. 
+A jelmagyarázatnál látható egyenes egyenletekből becsléseket lehet készíteni adott paraméterekkel rendelkező szűrés nélküli lekérdezéshez. 
 
 Tegyük fel, hogy a négy oszlop felett az időnövekedés lineáris, így több oszlopra egyszerű szorzással megkaphatjuk az időket.
 
@@ -63,13 +61,12 @@ int i = 0;
 *T1 = (Table1Type*) malloc(sizeof(Table1Type) * *T1_size);
 
 while (res->next())
-	{
-		T1[0][i].c1p1 = res->getInt("c1p1");
-		T1[0][i].c2 = res->getInt("c2");
-		T1[0][i].c3 = res->getInt("c3");
-		T1[0][i].c4 = res->getInt("c4");
-		i++;
-	}
+ {
+	T1[0][i].c1p1 = res->getInt("c1p1");
+	... 
+	T1[0][i].c4 = res->getInt("c4");
+	i++;
+ }
 delete res;
 delete pstmt;
 \end{python}
@@ -77,12 +74,11 @@ delete pstmt;
 Itt a válaszból lekérdezzük a méretet, majd ez alapján létrehozzuk a saját objektumunkat a memóriában, ezután egyesével belemásoljuk 
 a kapott adatokat soronként.
 Az mérési módszer megegyezik az előzőekben használtakkal.
-A texttt{res} és texttt{pstmt} törlése időméréskor nagyon fontos, ugyanis ennek kihagyása miatt a memória megtelhet!
 
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=\textwidth]{images/ccopy.png}
+\includegraphics[width=\textwidth]{images/graph/ccopy.png}
 \caption{Adatok másolása saját tömbbe}
 \label{fig:schema}
 \end{figure}
@@ -114,17 +110,14 @@ while( range <= 1048576){
 }
 \end{python}
 
-A mérés a belső 4 sorra vonatkozik. 
-
 \begin{figure}[h!]
 \centering
-\includegraphics[width=\textwidth]{images/inpuffer.png}
-\caption{Adatok kimásolása 2.}
+\includegraphics[width=\textwidth]{images/graph/pufferin.png}
+\caption{Adatok bemásolása 2.}
 \label{fig:schema}
 \end{figure}
-
 Mivel ebben az esetben a másolás egybefüggő memória területre vonatkozik, nem pedig elemenkénti hivatkozás, ezért elegendő egyetlen mérés.
-A grafikonon egy 4 oszlopos tábla átmásolásának a sebessége látható. Ebből Több vagy kevesebb oszlopra a becslés egyszerű szorzásokkal megkapható.
+A grafikonon egy 4 oszlopos tábla átmásolásának a sebessége látható. Ebből Több vagy kevesebb oszlopra, illetve sorra a becslés egyszerű szorzásokkal megkapható.
 
 4 és 3 oszlop esetén:
 $$ x = \text{sorok száma} / 65536 $$
@@ -135,26 +128,23 @@ $$ \text{pufferbe másolás ideje} * 0.75 = \text{3 oszlopos pufferbe másolás 
 
 \SubSection{Adatok kimásolása a pufferekből}
 
-A program ezen részének hatékonysága már egy komplexebb vizsgálatot igényel.
-Nézzük az első kiolvasási módszert, amikor a teljes válasz listát illetve a hozzá tartozó számlálót másoljuk ki.
+Nézzük az első kiolvasási módszert, amikor a teljes válasz tömböt illetve a hozzá tartozó számlálót másoljuk ki.
 Jelen mérésnél a lista csak egyetlen indexet tartalmaz. 
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=\textwidth]{images/outpuffer.png}
+\includegraphics[width=\textwidth]{images/graph/pufferout.png}
 \caption{Adatok kimásolása 2.}
 \label{fig:schema}
 \end{figure}
-
+$$ x = \text{sorok száma} / 65536 $$
 $$ 81,2*x + 156 = \text{puffer kiolvasási ideje} $$ 
-Az előzőhöz hasonlóan itt is egy memória darabot másolunk, ennek szorzásával megkapjuk mennyi időbe telne a kiolvasás indexpárok vagy számított értékek hozzáadása esetén.
-Ne felejtsük el, hogy ehhez tartozik egy számláló, ami jelen esetben a képlethez képest az elemszám gyöke, de két érték esetén már csak a felének a gyöke.
-Ez azt jelenti, hogy $2^{20}$ -on érték esetén is a kiolvasási ideje csak megközelítőleg 37$\mu\text{s}$
+Az előzőhöz hasonlóan itt is egy memória darabot másolunk, ennek szorzásával megkapjuk mennyi időbe telne a kiolvasás más méretek esetén.
+Fontos megjegyezni, hogy a mérések egy, program futtatáson belül történetek. Ez azért olyan lényeges, mert operációs rendszer és egyéb memória kezelési tényezők miatt, az első kimásolás akár 25\% al is lassabb lehet mint az azt követőek ugyan azon pufferből, lásd későbbiekben!
 
 
-A másik módszer miszerint nem olvassuk ki azonnal a választ, hanem alkalmazzuk az előző fejezetben taglalt optimalizálási eljárást.
-Ennek hatékonysága a sok kisebb olvasás miatt függ az eredmények számától. Ennek méréséhez módosítani kell a kernel kódot, ezért maunálisan végeztem a méréseket, vagyis a szűrési feltételeket úgy módosítottam, hogy a találatok száma megfelelően változzon.
-Fontos figyelembe venni, hogy a számok véletlenszerűek a táblázatban.
+A másik módszer miszerint nem olvassuk ki azonnal a teljes választ, hanem alkalmazzuk az előző fejezetben taglalt optimalizálási eljárást.
+Ennek hatékonysága a sok kisebb olvasás miatt függ az eredmények számától. Ennek méréséhez módosítani kell a kernel kódot, ezért manuálisan végeztem a méréseket, vagyis a szűrési feltételeket úgy módosítottam, hogy a találatok száma megfelelően változzon.
 
 \begin{figure}[h!]
 \centering
@@ -188,10 +178,7 @@ Túl alacsony globális méret hatásai:
 \item A lokális méretet is szükséges lehet csökkenteni. Ha túl alacsony, akkor egyetlen munkaelem fogja végrehajtani, a párhuzamosság teljesen megszűnik.
 \item A kimeneti számláló mérete alacsony, kevés visszatérő értéknél a kiolvasás gyors.
 \end{itemize}
-
-
 A méréseket ezen pontok alapján a következők szerint végeztem.
-
 A globális méret változzon 1 - $2^{20}$ értékig, a lokális pedig 1 - 1024 ig négyzetes lépcsőkkel, az oszthatóságra figyelve.
 
 A vizsgált kódrészlet:
@@ -215,43 +202,33 @@ clStatus = clFlush(command_queue);
 
 for(int i=0; i<global_size; i++)
 {
-	for(int j = 0; j < result_counter[i]; j++ )
-	{
-
-	}
+for(int j = 0; j < result_counter[i]; j++ ){}
 }
 myfile << timer.elapsedMicroseconds() << "," ;  
 \end{python}
 
 Szembetűnő lehet az egymásba ágyazott két ciklus. Azért szerepel ez kódrészlet a mérésekbe, hogy az eredményeken való végiglépegetés idejének nagyságrendje valamilyen módon meghatározható legyen. Fontos megjegyezni, hogy a fordítás során nem kerül figyelmen kívül hagyásra ez a két ciklus.
 
-A következő diagrammon látható részletesen mely program szakasz mennyi időbe telik.
-Minden esetben a Lokális méret 32 és a visszatérő értékek száma körülbelül $50\%$. Az eredményben csak index szerepel.
-
+A következő Gantt-diagram látható részletesen mely program szakasz mennyi időbe telik.
+Minden esetben a Lokális méret 32 és a visszatérő értékek száma körülbelül $50\%$, az eredményben pedig csak az index szerepel.
+\newpage
 \begin{figure}[h!]
 \centering
 \includegraphics[width=\textwidth]{images/gantt.png}
 \caption{Programszakaszok ideje.}
 \label{fig:schema}
 \end{figure}
-
 Látható, hogy a túl alacsony globális méret túl magas kernel futási időt eredményez. Túl nagy méret esetében pedig az eredmények kezelésének ideje válik számításigényessé.
-
-\newpage
-
-Az eredményt megvizsgálva látható, hogy van egy optimális globális méret tartomány $262144$ és $1024$ között.
-Azt is észrevehetjük, hogy bizonyos lokális méretek ebben a tartományban drasztikusan rosszabb eredményt mutatnak.
-A 16 és 32 -es méretek állnak legközelebb az ideális futási időhöz.
 \begin{figure}[h!]
 \centering
 \includegraphics[width=\textwidth]{images/gs_1_max.png}
 \caption{Maximális találat, az eredmény csak index.}
 \label{fig:schema}
 \end{figure}
-
-
-A második grafikonon egy olyan mérés látható, ahol a kernelben található feltételt úgy állítottam be, hogy megközelítőleg csak a tábla méretének 10\% -ával térjen vissza a lekérdezés.
-Azt láthatjuk, hogy az előző középen lévő hullám lesimul, ez részben annak köszönhető hogy a kernel futási ideje csökken azzal, hogy nem kell annyi indexet az eredmény tömbbe írnia.
+\newline
+Az eredményt megvizsgálva látható, hogy van egy optimális globális méret tartomány $262144$ és $1024$ között.
+Azt is észrevehetjük, hogy bizonyos lokális méretek ebben a tartományban drasztikusan rosszabb eredményt mutatnak.
+A 16 és 32 -es méretek állnak legközelebb az ideális futási időhöz.
 
 \begin{figure}[h!]
 \centering
@@ -259,6 +236,9 @@ Azt láthatjuk, hogy az előző középen lévő hullám lesimul, ez részben an
 \caption{kb. 10\% találat, az eredmény csak index.}
 \label{fig:schema}
 \end{figure}
+A második grafikonon egy olyan mérés látható, ahol a kernelben található feltételt úgy állítottam be, hogy megközelítőleg csak a tábla méretének 10\% -ával térjen vissza a lekérdezés.
+Azt láthatjuk, hogy az előző középen lévő hullám lesimul, ez részben annak köszönhető hogy a kernel futási ideje csökken azzal, hogy nem kell annyi indexet az eredmény tömbbe írnia.
+
 
 Azoknál a lekérdezéseknél, a kernelnek nem csak egy indexel kell visszatérnie hanem több kalkulált értékkel is, ott is hasonló grafikonokat kapunk. De a kernel növekvő munkája és a megnövekedett adatmennyiség kiolvasása miatt a középen lévő hullám nagyobb és nehezebben lapul le.
 
@@ -340,13 +320,13 @@ Illetve az \texttt{OpenCL} program használatakor:
 Sorok száma & 5307 & 514025 \\
 \hline
 \hline
-Előkészítés & 688786 $\mu s$ & 685148 $\mu s$ \\
+Előkészítés & 692705 $\mu s$ & 682227 $\mu s$ \\
 \hline
-Kernel futás & 1851 $\mu s$ & 2314 $\mu s$ \\
+Kernel futás & 1129 $\mu s$ & 1602 $\mu s$ \\
 \hline
-Eredmény kiolvasás & 2107 $\mu s$ & 2034 $\mu s$ \\
+Eredmény kiolvasás & 2197 $\mu s$ & 2013 $\mu s$ \\
 \hline
-Eredmény kiírás & 11682 $\mu s$ & 929053 $\mu s$ \\
+Eredmény kiírás & 11897 $\mu s$ & 916984 $\mu s$ \\
 \hline
 
 \end{tabular}
@@ -409,7 +389,7 @@ Az \texttt{Connector} mérései.
 Sorok száma & 16 & 839 \\
 \hline\hline
 
-Előkészítés & 21425 $\mu s$ & 21893 $\mu s$ \\
+Előkészítés & $21425 \mu s$ & $21893 \mu s$ \\
 \hline
 
 Lekérdezés & 39363 $\mu s$ & 85889 $\mu s$ \\
@@ -451,15 +431,15 @@ OpenCL megvalósítás
 Sorok száma & 16 & 839 \\
 \hline
 \hline
-Előkészítés & 333354 $\mu s$ & 329314 $\mu s$ \\
+Előkészítés & 314073 $\mu s$ & 315964 $\mu s$ \\
 \hline
-Kernel 1. 2. futása & 556 $\mu s$ & 561 $\mu s$ \\
+Kernel 1. 2. futása & 559 $\mu s$ & 593 $\mu s$ \\
 \hline
-Kernel 3. futása & 6912 $\mu s$ & 112407 $\mu s$ \\
+Kernel 3. futása & 7662 $\mu s$ & 103988 $\mu s$ \\
 \hline
-Eredmény kiolvasás & 1842 $\mu s$ & 1962 $\mu s$ \\
+Eredmény kiolvasás & 1974 $\mu s$ & 1745 $\mu s$ \\
 \hline
-Eredmény kiírás & 131 $\mu s$ & 1796 $\mu s$ \\
+Eredmény kiírás & 161 $\mu s$ & 1932 $\mu s$ \\
 \hline
 \end{tabular}
 \end{table}	
