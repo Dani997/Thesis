@@ -7,7 +7,7 @@ Globális méret javítva mérések alapján
 + Eltolásoknál globális méret cseréje intervallum méretre
 + Pointer ábra ans szó cseréje kész
 + CPU - GPU kis caches hiányzó cella?
-+ Shallow/Deep pipelines magyarul?
++ Shallow/Deep pipelines magyarul? Lefordítva
 + OpenCL program felépítése pontosítás
 + Globális méret meghatározása lista átnézése
 + Programkódok változóneveinek egységesítése
