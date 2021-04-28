@@ -6,7 +6,6 @@ Ebben a fejezetben megvizsgáljuk a program különböző részeit futási idő 
 
 Ebben a részben azt vizsgálom, mennyi idő eljuttatni az adatokat a \texttt{MySQL} szerverről a memóriába, azokat pufferekbe másolni majd onnan az eredményeket vissza ki.
 Annak érdekében, hogy az eredmények pontosabbak legyenek, minden eredmény 5 futás átlaga.
-
 \SubSection{A MySQL lekérdezés sebessége}
 Ezt a sebességet a következő két sor vizsgálatával kaphatjuk meg a legpontosabban:
 \begin{python}
@@ -21,7 +20,6 @@ while(i <= 1048576){
    command = "SELECT * FROM speedtest_1048576 Limit "  + to_string(i);
    ...; i+=range; }
 \end{python}
-
 \begin{itemize}
 \item A LIMIT hozzáadása a lekérdezéshez nem növeli annak idejét.
 \item A tábla tartalmaz elsődleges kulcsot, enélkül a lekérdezések ideje nő.
@@ -33,14 +31,12 @@ while(i <= 1048576){
 \item \texttt{SELECT * FROM ...} 
 \end{itemize}
 \end{itemize}
-
 \begin{figure}[h!]
 \centering
 \includegraphics[width=\textwidth]{images/graph/sqlquery.png}
 \caption{Az SQL lekérdezési sebessége}
 \label{fig:schema}
 \end{figure}
-%BETŰMÉRET NAGYÍTÁSRA SZORUL
 Az ábrán, egyértelműen látható, hogy a sorok számának növekedésével az idő is lineárisan nő.
 A jelmagyarázatnál látható egyenes egyenletekből becsléseket lehet készíteni adott paraméterekkel rendelkező szűrés nélküli lekérdezéshez. 
 
@@ -63,26 +59,22 @@ int i = 0;
 while (res->next())
  {
 	T1[0][i].c1p1 = res->getInt("c1p1");
-	... 
+	//Tobbi oszlop ...
 	T1[0][i].c4 = res->getInt("c4");
 	i++;
  }
 delete res;
 delete pstmt;
 \end{python}
-
 Itt a válaszból lekérdezzük a méretet, majd ez alapján létrehozzuk a saját objektumunkat a memóriában, ezután egyesével belemásoljuk 
 a kapott adatokat soronként.
 Az mérési módszer megegyezik az előzőekben használtakkal.
-
-
 \begin{figure}[h!]
 \centering
 \includegraphics[width=\textwidth]{images/graph/ccopy.png}
 \caption{Adatok másolása saját tömbbe}
 \label{fig:schema}
 \end{figure}
-
 A grafikonon két dolgot vehetünk észre azonnal. Az egyik az, hogy ez a folyamat lassabb mint maga a lekérdezés a másik pedig, hogy drasztikusabb a növekedés az oszlopok számának sokasodásával.
 Tegyük fel, hogy 4 oszlop felett már nincs szignifikáns eltérés az időnövekedésben. Ekkor használhatjuk az előbb is használt módszert a becslésekhez.
 
@@ -109,7 +101,6 @@ while( range <= 1048576){
 	range += 65536;
 }
 \end{python}
-
 \begin{figure}[h!]
 \centering
 \includegraphics[width=\textwidth]{images/graph/pufferin.png}
@@ -128,12 +119,12 @@ $$ \text{pufferbe másolás ideje} * 0.75 = \text{3 oszlopos pufferbe másolás 
 
 \SubSection{Adatok kimásolása a pufferekből}
 
-Nézzük az első kiolvasási módszert, amikor a teljes válasz tömböt illetve a hozzá tartozó számlálót másoljuk ki.
+Nézzük az első kiolvasási módszert, amikor a teljes eredmény tömböt illetve a hozzá tartozó számlálót másoljuk ki.
 Jelen mérésnél a lista csak egyetlen indexet tartalmaz. 
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=\textwidth]{images/graph/pufferout.png}
+\includegraphics[width=14.8cm]{images/graph/pufferout.png}
 \caption{Adatok kimásolása 2.}
 \label{fig:schema}
 \end{figure}
@@ -145,24 +136,22 @@ Fontos megjegyezni, hogy a mérések egy, program futtatáson belül története
 
 A másik módszer miszerint nem olvassuk ki azonnal a teljes választ, hanem alkalmazzuk az előző fejezetben taglalt optimalizálási eljárást.
 Ennek hatékonysága a sok kisebb olvasás miatt függ az eredmények számától. Ennek méréséhez módosítani kell a kernel kódot, ezért manuálisan végeztem a méréseket, vagyis a szűrési feltételeket úgy módosítottam, hogy a találatok száma megfelelően változzon.
-
 \begin{figure}[h!]
 \centering
-\includegraphics[width=\textwidth]{images/outpuffer2.png}
+\includegraphics[width=14.8cm]{images/graph/outpuffer2_1.png}
 \caption{Adatok kimásolása 2.}
 \label{fig:schema}
 \end{figure}
-
+\begin{figure}[h!]
+\centering
+\includegraphics[width=14.8cm]{images/graph/outpuffer2_2.png}
+\caption{Adatok kimásolása 2.}
+\label{fig:schema}
+\end{figure}
 Végeredményként látjuk, hogy ez a fajta kiolvasás rendkívül hatékony, de csak abban az esetben, ha a találatok száma minimális.
 238 találatnál a módszer elérte azt az időt, ami alatt el lehet végezni a teljes másolást egy darabban.
-\begin{figure}[h!]
-\centering
-\includegraphics[width=\textwidth]{images/outpuffer3.png}
-\caption{Adatok kimásolása 2.}
-\label{fig:schema}
-\end{figure}
 
-\newpage
+
 \SubSection{A globális méretből adódó sebességek}
 
 A megfelelő globális méret meghatározása futási idő szempontjából nagyon fontos.
@@ -211,7 +200,7 @@ Szembetűnő lehet az egymásba ágyazott két ciklus. Azért szerepel ez kódr�
 
 A következő Gantt-diagram látható részletesen mely program szakasz mennyi időbe telik.
 Minden esetben a Lokális méret 32 és a visszatérő értékek száma körülbelül $50\%$, az eredményben pedig csak az index szerepel.
-\newpage
+
 \begin{figure}[h!]
 \centering
 \includegraphics[width=\textwidth]{images/gantt.png}
@@ -221,7 +210,7 @@ Minden esetben a Lokális méret 32 és a visszatérő értékek száma körülb
 Látható, hogy a túl alacsony globális méret túl magas kernel futási időt eredményez. Túl nagy méret esetében pedig az eredmények kezelésének ideje válik számításigényessé.
 \begin{figure}[h!]
 \centering
-\includegraphics[width=\textwidth]{images/gs_1_max.png}
+\includegraphics[width=\textwidth]{images/graph/global_size_1.png}
 \caption{Maximális találat, az eredmény csak index.}
 \label{fig:schema}
 \end{figure}
@@ -232,7 +221,7 @@ A 16 és 32 -es méretek állnak legközelebb az ideális futási időhöz.
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=\textwidth]{images/gs_1_10.png}
+\includegraphics[width=\textwidth]{images/graph/global_size_2.png}
 \caption{kb. 10\% találat, az eredmény csak index.}
 \label{fig:schema}
 \end{figure}
@@ -242,15 +231,14 @@ Azt láthatjuk, hogy az előző középen lévő hullám lesimul, ez részben an
 
 Azoknál a lekérdezéseknél, a kernelnek nem csak egy indexel kell visszatérnie hanem több kalkulált értékkel is, ott is hasonló grafikonokat kapunk. De a kernel növekvő munkája és a megnövekedett adatmennyiség kiolvasása miatt a középen lévő hullám nagyobb és nehezebben lapul le.
 
-Ezek alapján meghatározható, hogy az 
-\newpage
+Ezek alapján azt mondhatjuk, hogy közel ideális választás volt az 1024 mint globális méret.
+
 \Section{Gyakorlati példák és következtetések}
 
 A hatékonyság megállapításához a \texttt{A MySQL lekérdezés sebessége} részben használt módszert fogom alkalmazni.
 A fejezetben előfordulnak rövidítések: CONN - a MySQL Connector programra a CL pedig az OpenCL -t használó programra utal. 
 A k betű ezres szorzót, az i betű pedig indexelés használatot jelöl.
-
-Bontsuk az \texttt{OpenCL} programot négy részre:
+\newline Bontsuk az \texttt{OpenCL} programot négy részre:
 \begin{itemize}
 \item Előkészítés - Minden ami a kernel futása előtt történik.
 \item Kernel(ek) futása
@@ -264,7 +252,7 @@ A \texttt{Connector} programot pedig 3 részre
 \item Eredmények kezelése
 \end{itemize}
 Az eredmény kezelése résznél azt vizsgáljuk melyik esetben gyorsabb az eredményeket fájlba írni.
-\newpage
+
 \SubSection{Egy táblás lekérdezés}
 
 \begin{python}
@@ -292,7 +280,7 @@ Eredmény kiírás & 12591 $\mu s$ & 1110877 $\mu s$ \\
 \hline
 \end{tabular}
 \end{table}
-Ugyan ez indexeléssel:
+Ugyanez indexeléssel:
 \begin{table}[h!]
 \centering
 \begin{tabular}{|p{6cm}|p{3cm}|p{3cm}|}
@@ -312,7 +300,7 @@ Eredmény kiírás & 17009 $\mu s$ & 1087573 $\mu s$ \\
 \end{tabular}
 \end{table}
 
-Illetve az \texttt{OpenCL} program használatakor:
+Illetve az \texttt{OpenCL} program használatakor:\newline
 \begin{table}[h!]
 \centering
 \begin{tabular}{|p{6cm}|p{3cm}|p{3cm}|}
@@ -328,47 +316,39 @@ Eredmény kiolvasás & 2197 $\mu s$ & 2013 $\mu s$ \\
 \hline
 Eredmény kiírás & 11897 $\mu s$ & 916984 $\mu s$ \\
 \hline
-
 \end{tabular}
 \end{table}
-
 Láthatjuk, hogy összességében az OpenCL megvalósítás sokkal lassabb. De vegyük észre, hogy a program legtöbb részének csak egyszer kell lefutnia. 
-Több lekérdezés végezhető úgy, hogy csak a  kernel és eredménykiolvasás idejét kell többszörözni. Ezen kívül feltűnhet azt is, hogy a tömbben lévő adatokat kiírás szempontjából gyorsabban lehet kezelni.
+Több lekérdezés végezhető úgy, hogy csak a  kernel és eredménykiolvasás idejét kell többszörözni. Ezen kívül szembetűnő az is, hogy a tömbben lévő adatokat gyorsabban lehet kezelni.
 
-Ne feledjük azt sem, hogy a táblát utólag indexelni körülbelül 5,5 másodperce telt!
-
-A hatékonyságot a következő módon becsülhetjük:
+Úgy gondolom meg kell jegyezni azt is, hogy a táblázat utólagos indexelése megközelítőleg 5,5 másodpercet vett igénybe.
+\newline A hatékonyságot a következő módon becsülhetjük:
 \begin{itemize}
 \item Az előkészítést egyszer vesszük figyelembe.
 \item Az előkészítési időhöz hozzá adjuk az ismétlődő részeket.
-
 Lekérdezés, kernel(ek) futása, eredmény kiolvasás, eredmény kiírás.
-
 \end{itemize}
-
 \begin{figure}[h!]
 \centering
 \includegraphics[width=\textwidth]{images/test/where.png}
 \caption{Becslés csak a lekérdezésre.}
 \label{fig:schema}
 \end{figure}
-
 \begin{figure}[h!]
 \centering
 \includegraphics[width=\textwidth]{images/test/where_write.png}
 \caption{Becslés az eredmények kiírásával.}
 \label{fig:schema}
 \end{figure}
-
-A mérésekből a következő következtetéseket vonhatjuk le:
-0.5\% os visszatérési arany esetében ha nincs indexelés, akkor 7 lekérdezés után megtérülhet az adatok mozgatási költsége.
-Ha van indexelés akkor ez a szám eléri a 37 -et.
+A mérésekből a következő következtetéseket vonhatjuk le:\newline
+0.5\% os visszatérési arany esetében ha nincs indexelés, akkor 7 lekérdezés után megtérülhetnek az \texttt{OpenCL} plusz költségei.
+Ha van indexelés abban az esetben ez a szám eléri a 37 -et.\newline
 50\% -os visszatérési aránynál már a 2. lekérdezésnél is nyereséges az \texttt{OpenCL} -es megvalósítás. 
 
 A grafikonon a \texttt{CONN 500k} és \texttt{CONN500k i} szinte egymást fedi, amiből látjuk, hogy ha a válaszban visszatérő sorok száma magas, akkor az indexelés hatékonysága alacsony.
 
 
-\newpage
+
 \SubSection{Két táblás lekérdezés}
 
 \begin{python}
@@ -380,7 +360,7 @@ WHERE TM.c3>9900 AND TS.c3>9900;
 	16 row(s) returned
 \end{python}
 
-Az \texttt{Connector} mérései.
+Az \texttt{Connector} mérései:
 
 \begin{table}[h!]
 \centering
@@ -444,19 +424,16 @@ Eredmény kiírás & 161 $\mu s$ & 1932 $\mu s$ \\
 \end{tabular}
 \end{table}	
 
-Az \texttt{OpenCL} -es futási időket továbbá azzal igyekeztem optimalizálni, hogy a szerverről csak a szükséges oszlopokat kértem le, így elkerülve a fölösleges adatok mozgatását.
-
-\newpage
+Az \texttt{OpenCL} -es futási időket igyekeztem optimalizálni azzal, hogy a szerverről csak a szükséges oszlopokat kértem le, így elkerülve a fölösleges adatok mozgatását.
 \begin{figure}[h!]
 \centering
 \includegraphics[width=\textwidth]{images/test/join.png}
 \caption{Becslés csak a lekérdezésre.}
 \label{fig:schema}
 \end{figure}
+A méréseket látva, arra következtetésre juthatunk, hogy az \texttt{OpenCL} program nem bizonyul hatékonynak, még ilyen alacsony találati számnál sem. A kiolvasási időt tovább lehetne optimalizálni az előzőekben említett másik módszerrel, ezzel akár tizedére is csökkenhet a kiolvasási idő, illetve minimálisan javulhat a kiírási idő is. Ez a kis számú lekérdezés annyira speciális esete lenne a lekérdezéseknek, hogy nem vizsgálom tovább.
 
-A méréseket látva, arra következtetésre juthatunk, hogy az \texttt{OpenCL} kód nem bizonyul hatékonynak, még ilyen alacsony találati számnál sem. A kiolvasási időt tovább lehetne optimalizálni az előzőekben említett másik módszerrel, ezzel akár tizedére is csökkenhet a kiolvasási idő, illetve minimálisan javulhat a kiírási idő is. Ez a kis számú lekérdezés annyira speciális esete lenne a lekérdezéseknek, hogy nem vizsgálom tovább.
-
-A táblakapcsolás nélküli lekérdezéshez képesti drámai teljesítmény romlás oka az hogy a \texttt{MySQL} motorja a táblák kapcsolásánál felhasználja a másodlagos kulcsokat mint index így nem kell végignéznie a táblát a párokat keresve.
+A táblakapcsolás nélküli lekérdezéshez képesti drámai teljesítmény romlás oka az hogy a \texttt{MySQL} motorja a táblák kapcsolásánál felhasználja a másodlagos kulcsokat mint index így nem kell végignéznie minden sort a párokat keresve.
 
 Valamilyen indexelési módszer használatával az \texttt{OpenCL} megvalósítás is optimalizálható lenne, ám ez bonyolult és költséges lehet.
 
@@ -465,12 +442,5 @@ Az eredményekből azt is látjuk, hogy nagyobb mértékben nőtt a futási idej
 
 
 
-%-Mysql nagyon hatékony
-%- Főleg ha kevéssel tér vissza és van index ésvagy join
-
-%- HDD lassabb lehet.
-%- Jobb videókártya lasabb CPU
-
-%- Globálisba dolgozunk de cache lenne jó
 
 
