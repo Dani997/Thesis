@@ -131,3 +131,53 @@ Futtatáshoz és fordításhoz a következő parancsokat használhatjuk:
 	
 	./connectortest.out
 \end{python}
+
+\Section{Connector proxy létrehozása}
+
+Azt feltételezhetjük, hogy a rendelkezésre álló MySQL elérési felületet érdemes megtartani valamilyen formában a lekérdezések optimalizálása során. Ez többek között az alábbiakkal indokolható.
+\begin{itemize}
+	\item A felület jól átgondolt, a területen járatos szakemberek készítették és a használat szempontjából kiállta az idő próbáját.
+	\item Elterjedt. Amennyiben az a cél, hogy az elkészített szoftver előnyeit minél többen használni tudják, és akarják is, arra kell törekedni, hogy az új felhasználóknak minél kevesebb plusz munkát jelentsen az elsajátítása.
+	\item Lehetőséget ad, hogy egy saját implementációval transzparens módon megoldható legyen az optimalizálás. Ez olyan szempontból kifejezetten praktikus, hogy így opcionálissá tehető az optimalizálási módszer használata. A szokványos és a dolgozatban bemutatásra kerülő OpenCL-el optimalizált elérés között a váltás kényelmesen megtehető.
+\end{itemize}
+
+A \textit{proxy} nevű tervezési minta kiválóan alkalmas lehet az említett feladat megoldására. \Aref{fig:proxy_arch}. ábrán bal oldal láthatjuk a hagyományos módszert, ahogy az adatokhoz hozzá lehet férni egy alkalmazásból. A jobb oldalt a proxy segítségével optimalizált változat látható.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=\textwidth]{images/proxy_arch.png}
+\caption{A hagyományos és az optimalizáláshoz használt proxy-val kiegészített felépítés}
+\label{fig:proxy_arch}
+\end{figure}
+
+A feldolgozási folyamatot \aref{fig:process}. ábrán látható formában képzelhetjük el.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=\textwidth]{images/process.png}
+\caption{A feldolgozási lépések a proxy beiktatásával}
+\label{fig:process}
+\end{figure}
+
+Ennek az egyik igen fontos eleme az előzetes kiértékelő, amely a kapott lekérdezésről meg tudja állapítani, hogy azt érdemes-e párhuzamosítani.
+\begin{itemize}
+	\item Mivel ennek egy gyors döntést kell hoznia, a lekérdezést nem fogja végrehajtani, ezért csak egy becslést ad arra, hogy melyik végrehajtási mód lehet megfelelő.
+	\item A kimenete egyszerűen csak egy logikai érték.
+	\item Figyelembe kell vennie a lekérdezés összetettségét, az aktuálisan rendelkezésre álló számítási kapacitásokat, és adatbázisban lévő adatok mennyiségét.
+\end{itemize}
+
+A következő fontos elem a lekérdezés átalakítása, amely a lekérdezést szétválasztja adatgyűjtési és kiértékelési részekre.
+\begin{itemize}
+	\item A párhuzamos végrehajtásnál úgy általában azt feltételezzük, hogy szelekciós műveletről van szó.
+	\item Az adatgyűjtést követően már a számítási rész végrehajtásához nem szükséges az adatbázishoz fordulni.
+\end{itemize}
+
+Érdekes lehet egy olyan változatot is felvetni, amelyben a lekérdezés egyidejűleg elindul a direkt végrehajtás és a párhuzamos végrehajtás irányába is, majd azt az eredményt szolgáltatja, amelyik hamarabb visszatér. Ez elvi szinten ugyan megoldható, viszont feltételezhetően a konkurrens végrehajtás miatt mindkét számítási idő sérülni fog az erőforráslimitek miatt. A későbbiekben tehát az előzetes kiértékelés eredményére hagyatkozhatunk.
+
+\SubSection{Az API illesztése}
+
+A dolgozat keretein belül nem cél a teljes Connector interfész megvalósítása, csak annak egy részhalmaza. Mivel proxy-ról van szó, ezért az összes olyan művelet átkötése mennyiségi problémát jelent csak, amely nem változtatja meg a végrehajtás módját.
+
+A driver beállítások és az adatbázishoz kapcsolódás változatlan kell legyen, mivel azok szükségesek ahhoz, hogy hozzáférjünk az adatbázishoz.
+
+A különbség a \texttt{prepareStatement} kapcsán jelenik meg. Ehhez kell tehát egy saját implementációt adni, amelyik kompatibilitási okokból származhat közvetlenül az \texttt{sql::PreparedStatement} osztályból. Hogy ha azt szeretnénk, hogy a kódban csak az \texttt{include}-okat kelljen megváltoztatni, akkor érdemes a \texttt{Driver} és \texttt{Connection} osztályokat szintén származtatni. Mivel az interfész megtartható, ezért statikus linkeléssel is lehetőség adódhat a funkció cseréjére, vagyis hogy a fejlesztő (mint célfelhasználó) a saját alkalmazásához nem a \texttt{Connector}-t fogja használni, hanem a proxy-t (amely aztán használja a \texttt{Connector}-t).
