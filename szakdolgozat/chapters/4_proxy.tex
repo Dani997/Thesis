@@ -164,6 +164,7 @@ Ennek az egyik igen fontos eleme az előzetes kiértékelő, amely a kapott lek�
 	\item Mivel ennek egy gyors döntést kell hoznia, a lekérdezést nem fogja végrehajtani, ezért csak egy becslést ad arra, hogy melyik végrehajtási mód lehet megfelelő.
 	\item A kimenete egyszerűen csak egy logikai érték.
 	\item Figyelembe kell vennie a lekérdezés összetettségét, az aktuálisan rendelkezésre álló számítási kapacitásokat, és adatbázisban lévő adatok mennyiségét.
+	\item Adhatunk lehetőséget a felhasználónak, hogy direkt módon döntsön a feldolgozás menetéről. Ha a felhasználó ismeri a rendszer előnyeit, hátrányait olykor könnyedén dönthet arról, hogy használja -e az OpenCL-es kiértékelést. Például ha sok visszatérő sorrá számít akkor használja, ha nem biztos, akkor automatikus módban hagyja.
 \end{itemize}
 
 A következő fontos elem a lekérdezés átalakítása, amely a lekérdezést szétválasztja adatgyűjtési és kiértékelési részekre.
@@ -172,7 +173,7 @@ A következő fontos elem a lekérdezés átalakítása, amely a lekérdezést s
 	\item Az adatgyűjtést követően már a számítási rész végrehajtásához nem szükséges az adatbázishoz fordulni.
 \end{itemize}
 
-Érdekes lehet egy olyan változatot is felvetni, amelyben a lekérdezés egyidejűleg elindul a direkt végrehajtás és a párhuzamos végrehajtás irányába is, majd azt az eredményt szolgáltatja, amelyik hamarabb visszatér. Ez elvi szinten ugyan megoldható, viszont feltételezhetően a konkurrens végrehajtás miatt mindkét számítási idő sérülni fog az erőforráslimitek miatt. A későbbiekben tehát az előzetes kiértékelés eredményére hagyatkozhatunk.
+Érdekes lehet egy olyan változatot is felvetni, amelyben a lekérdezés egyidejűleg elindul a direkt végrehajtás és a párhuzamos végrehajtás irányába is, majd azt az eredményt szolgáltatja, amelyik hamarabb visszatér. Ez elvi szinten ugyan megoldható, viszont feltételezhetően a konkurens végrehajtás miatt mindkét számítási idő sérülni fog az erőforráslimitek miatt. A későbbiekben tehát az előzetes kiértékelés eredményére hagyatkozhatunk.
 
 \SubSection{Az API illesztése}
 
