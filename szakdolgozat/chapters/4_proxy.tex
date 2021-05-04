@@ -126,8 +126,8 @@ Lekérdezés után fontos törölni az eredményhalmazt és az elkészített uta
 \end{cpp}
 Futtatáshoz és fordításhoz a következő parancsokat használhatjuk: 
 \begin{python}
-	g++ -D_GLIBCXX_USE_CXX11_ABI=0 connectortest.cpp -o connectortest.out 
-	-lmysqlcppconn
+	g++ -D_GLIBCXX_USE_CXX11_ABI=0 connectortest.cpp 
+	-o connectortest.out -lmysqlcppconn
 	
 	./connectortest.out
 \end{python}
@@ -182,3 +182,5 @@ A dolgozat keretein belül nem cél a teljes Connector interfész megvalósítá
 A driver beállítások és az adatbázishoz kapcsolódás változatlan kell legyen, mivel azok szükségesek ahhoz, hogy hozzáférjünk az adatbázishoz.
 
 A különbség a \texttt{prepareStatement} kapcsán jelenik meg. Ehhez kell tehát egy saját implementációt adni, amelyik kompatibilitási okokból származhat közvetlenül az \texttt{sql::PreparedStatement} osztályból. Hogy ha azt szeretnénk, hogy a kódban csak az \texttt{include}-okat kelljen megváltoztatni, akkor érdemes a \texttt{Driver} és \texttt{Connection} osztályokat szintén származtatni. Mivel az interfész megtartható, ezért statikus linkeléssel is lehetőség adódhat a funkció cseréjére, vagyis hogy a fejlesztő (mint célfelhasználó) a saját alkalmazásához nem a \texttt{Connector}-t fogja használni, hanem a proxy-t (amely aztán használja a \texttt{Connector}-t).
+
+

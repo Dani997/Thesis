@@ -4,7 +4,7 @@
 
 \Section{Indexelés}
 %https://www.sqlshack.com/query-optimization-techniques-in-sql-server-the-basics/
-Egy táblázat adataihoz kétféleképpen lehet hozzáférni, úgynevezett szkenneléssel illetve kereséssel. A keresés nem más, mint mikor valamilyen szűrő feltétel alapján választunk ki rekordokat. Ezek a szűrőfeltételek általában keskeny szűrők, azaz sok adatból kevés értékre igazak. A szkennelés, mikor egy teljes indexet keresünk a megfelelő értékek visszaadásához. Egy tábla akár több millió sor is lehet, kereséskor ennek akár minden a feltételben szereplő értékét vizsgálni kellhet. Ugyan ezen a táblán sokkal gyorsabban is át lehet haladni ha az indexek bináris fáját vizsgáljuk, ilyenkor anélkül adható vissza a végeredmény, hogy minden adatot át kellene vizsgálni.
+Egy táblázat adataihoz kétféleképpen lehet hozzáférni, úgynevezett szkenneléssel illetve kereséssel. A keresés nem más, mint mikor valamilyen szűrő feltétel alapján választunk ki rekordokat. Ezek a szűrőfeltételek általában keskeny szűrők, azaz sok adatból kevés értékre igazak. A szkennelés, mikor egy teljes indexet keresünk a megfelelő értékek visszaadásához. Egy tábla akár több millió sor is lehet, kereséskor ennek akár minden a feltételben szereplő értékét vizsgálatra kerülhet. Ugyan ezen a táblán sokkal gyorsabban is át lehet haladni ha az indexek bináris fáját vizsgáljuk, ilyenkor anélkül adható vissza a végeredmény, hogy minden adatot át kellene vizsgálni.
 Néhány felmerülő gondolat amit optimalizáláskor figyelni kell:
 \begin{itemize}
 \item Van -e olyan index amely használható a lekérdezéskor?
@@ -27,16 +27,36 @@ Néhány felmerülő gondolat amit optimalizáláskor figyelni kell:
 \Section{Normalizálás és denormalizálás}
 
 \SubSection{Normalizálás}
-A normalizálás az adatok adatbázisba szervezésének folyamata. Ez magába foglalja a táblák létrehozását és az azok közötti kapcsolatok kialakítását. Mindezt olyan szabályok szerint melyek segítenek az adatok védelmében, az adatbázis rugalmassá tételében, a redundancia elkerülésében és következetlen függőségek kiküszöbölésében.
+A normalizálás az adatok adatbázisba szervezésének folyamata. Ez magába foglalja a táblák létrehozását és az azok közötti kapcsolatok kialakítását. Mindezt olyan szabályok szerint melyek segítenek az adatok védelmében, az adatbázis rugalmassá tételében, a redundancia elkerülésében és a következetlen függőségek kiküszöbölésében.
 
-A redundancia pazarolja a lemezterületet és karbantartási problémákat okoz. Egyazon adat több helyen való tárolása igényli, hogy mindenhol ugyan úgy módosuljon az adat, különben anomáliák jöhetnek létre.
+A redundancia pazarolja a lemezterületet és karbantartási problémákat okoz. Egyazon adat több helyen való tárolása igényli, hogy mindenhol ugyan úgy módosuljon az adat, különben anomáliák jönnek létre.
 
 A következetlen függőség a táblák nem megfelelően felépítéséből adódik. Bizonyos adatelemek ha nem megfelelő táblába kerülnek, akkor nehezítik annak elérését, illetve teljesen megszakadhat az adatok megtalálásának útja.
 
-Ezek kiküszöbölésére léteznek szabályok, melyeket normál formáknak nevezünk. Ha egy séma teljesíti az első normál forma előírásait, akkor azt mondjak első normálformában van. A harmadik normálforma tekinthető a legtöbb alkalmazáshoz szükséges legmagasabb szintnek.
+Ezek kiküszöbölésére léteznek szabályok, melyeket normál formáknak nevezünk. Ha egy séma teljesíti az első normál forma előírásait, akkor azt mondjak első normálformában van. A harmadik normálforma tekinthető a legtöbb alkalmazáshoz szükséges legmagasabb szintnek, bár öt van.
 
-°%https://tudasbazis.sulinet.hu/hu/szakkepzes/informatika/adatbazis-kezeles/a-normalizalas-folyamata/normal-formak
+\SubSection{Denormalizálás}
+%https://web.archive.org/web/20171201030308/https://pdfs.semanticscholar.org/2c79/069c01ba8d598f32e61fe367ef6d261a0cb4.pdf
+Általános vélekedés, hogy a normalizáció rontja a válaszidőt. A teljes normalizálás logikailag különálló entitásokat eredményez, melyek fizikailag is különállóan vannak eltárolva. Ennek hatása lehet, hogy a feldolgozás több erőforrást igényel.
+A denormalizálás célja az olvasási sebesség javítása azzal, hogy szándékosan idéznek elő redundanciát vagy csoportosítanak adatokat.
+\begin{itemize}
+\item A folyamat magas szakértelmet igényel.
+\item Figyelembe kell venni az adatbázis logikai és fizikai felépítését is.
+\item Csak már bizonyos szintig normalizált sémákon végezhető el.
+\item Főként sok lekérdezés, és kevés frissítés esetén érdemes alkalmazni.
+\end{itemize}
 
 
 
 % TODO: Egyéb paraméterek, beállításaik
+
+\SubSection{Egyéb optimalizálási paraméterek}
+
+Az adatbázis sebességét nem csak annak megfelelő kialakításával segíthetjük elő, hanem a megfelelő adatbázis kezelő kiválasztásával és annak helyes konfigurálásával is.
+Jelen esetben a \texttt{MySQL}-t használjuk, melyhez több motor is elérhető. Alapértelmezett módon ez az \texttt{InnoDB}, de ezen kívül elérhető a \texttt{MyISAM}-is. Utóbbinak hátránya, hogy nem támogatja a sor szintű zárolást, idegen kulcsokat és tranzakciókat. A \texttt{MyISAM} ezek miatt viszonylag ritkán jobb döntés. Íme pár fontosabb konfigurációs beállítás:
+\begin{itemize}
+\item \texttt{innodb buffer pool size}: A motor gyorsítótárának mérete. Elérheti a szerver memória 80-90\% -át is ha ez szükséges.
+\item \texttt{innodb io capacity}: Megadja a \texttt{MySQL}-nek, hogy hány I/O műveletet végezhet. Ezzel háttértárnak megfelelő korlát adható, így nem fog a szerver túl sok ilyen műveletet használni.
+\item \texttt{query cache limit} és \texttt{query cache size}: Túl nagy terhelés esetén a gyorsítótár használhatatlan, ilyenkor érdemes kikapcsolni, hogy megspóroljuk annak kezelési költségét.
+\item \texttt{slow query log, long query time}: Megmutatja mely lekérdezések lassabbak a megadott időnél. Erről .log fájl készül amely megmutatja, hány sort érint a lekérdezés, mikor és ki hajtotta végre.
+\end{itemize}
