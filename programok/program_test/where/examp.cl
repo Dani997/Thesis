@@ -12,7 +12,7 @@ typedef struct {
 #pragma OPENCL EXTENSION cl_khr_int64_base_atomics : enable
 
 __kernel void examp(   __global Table1Type *T1, __global TableResultType *ANS,
-                             __global int *Counter, __constant int *limit, __constant int *Range )
+                             __global int *Counter, __global int *limit, __global int *Range )
 {
 
 int index=get_global_id(0);
@@ -23,11 +23,12 @@ int loc;
 
 for(i = x ; i < x+ *Range; i++)
 {
-    if( i< *limit &&  T1[i].c3==1 && T1[i].c4>5001 )
+    if( i< *limit &&T1[i].c3 == 1 && T1[i].c4>5001 )
     {
       loc = index* *Range + Counter[index];
         ANS[ loc ].index = i;
         atomic_inc(&Counter[index]);
+
     }
 } 
 

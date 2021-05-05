@@ -23,7 +23,7 @@ int loc;
 
 for(i = x ; i < x+ *Range; i++)
 {
-    if( i< *limit &&  T1[i].c3==1 && T1[i].c4>5001 )
+    if( i< *limit && T1[i].c4>5001 )
     {
       loc = index* *Range + Counter[index];
         ANS[ loc ].index = i;
