@@ -16,7 +16,6 @@ timer.start();
 	load_database(&t1, &t1_size);
 
 	return 0;
-
 }
 
 void load_database(Table1Type **T1, int *T1_size)
@@ -70,8 +69,6 @@ void load_database(Table1Type **T1, int *T1_size)
 		}
 		i+=range;
 		myfile << sum/5 << endl;
-		
-
   	  	}
 
 	}
