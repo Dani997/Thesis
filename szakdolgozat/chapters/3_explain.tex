@@ -10,12 +10,13 @@ A lekérdezés végrehajtási terv elkészítésével információkat nyerhetün
 Az utasítás megfelelő kifejezéssel együtt használva (\texttt{SELECT}, \texttt{DELETE}, \texttt{INSERT}, \texttt{REPLACE}, \texttt{UPDATE})  információkat jelenít meg az optimalizáló által előállított feldolgozási tervről. Láthatóvá válik például a táblák összekapcsolási sorrendje és a használt index neve.
 
 További információk érhetők el a \texttt{SHOW WARNINGS} használatával.
-A \texttt{FORMAT} parancs használható kimeneti formátum választásra. \texttt{TRADITIONAL} az alapértelmezett táblázatos alak illetve \texttt{JSON} ami elnevezésének megfelelő formátumban jelenti meg a kimenetet.
+A \texttt{FORMAT} parancs használható kimeneti formátum választásra. A \texttt{TRADITIONAL} az alapértelmezett táblázatos alak, illetve másik a \texttt{JSON} ami elnevezésének megfelelő formátumban jelenti meg a kimenetet.
 
 A parancs használata rávilágít arra, hogy hol van szükség indexek használatára a lekérdezés gyorsításához, illetve ellenőrizhetjük, hogy a táblák megfelelő sorrendben vannak -e összekapcsolva. 
+
 \texttt{JOIN} helyett \texttt{STRAIGHT\_JOIN} használatával tippek adhatók az optimalizálónak a táblák kapcsolási sorrendjéről. De a \texttt{STRAIGHT\_JOIN} letiltja a \texttt{semijoin} transzformációkat, így indexelés ebben az esetben nem használható.
 
-\texttt{ANALYZE TABLE} utasítással frissíthetőek a statisztikák, mint a kulcsok számossága. Ez befolyásolhatja az optimalizáló döntéseit. 
+\texttt{ANALYZE TABLE} utasítással frissíthetőek a statisztikák, mint a kulcsok számossága. Ez befolyásolhatja az optimalizáló döntéseit. \cite{explain}
 
 % TODO: Ide érdemes kifejteni, MySQL Workbench-es példákkal illusztrálni, hogy hogyan működik a parancs.
 
@@ -58,12 +59,6 @@ filtered & filtered & a szűrt sorok százaléka a tábla állapota szerint \\
 Az execution plan optimalizálási módnál a kapott információk felhasználásával tudjuk optimalizálni a lekérdezéseket.
 Olyan adatbázist kell választanunk ennek kipróbáláshoz amelyben használhatók indexek de nincs feltétlen szükség rájuk, össze kapcsolhatunk több táblát és rendezhetjük az adatokat például növekvő sorrendben. A felhasználási mód miatt kevés dologra kell ügyelnünk a tábláknál, ilyen például a NotNull. A táblák minden eleme INT típusú, és csak a feltöltött adatok értékének intervalluma tér el. Az elsődleges kulcs minden esetben 0 -tól N-1 ig tart.
 
-\begin{figure}[h!]
-\centering
-\includegraphics[width=10cm]{images/new_schema.png}
-\caption{Adatbázis séma}
-\label{fig:schema}
-\end{figure}
 
 T1 -es tábla:
 \begin{itemize}
@@ -89,13 +84,19 @@ T3 -as tábla:
 \end{itemize}
 Az idegen kulcsok véletlenszerűen kapcsolódnak a T1 -es és T2 -es táblához.
 
+\begin{figure}[h!]
+\centering
+\includegraphics[width=10cm]{images/new_schema.png}
+\caption{Adatbázis séma}
+\label{fig:schema}
+\end{figure}
 
 %Az oszlopnevek számozottak. A \texttt{c3}-\texttt{c5} Az értékeik véletlenszerűen generált egészek, \texttt{c3} $in [0, 100]$, \texttt{c4} $in [0, 10000]$, \texttt{c5} $in [0, 10]$.
 
 
 \SubSection{A táblák feltöltése}
 
-Az adatokat egy \texttt{C++} kóddal generáltam \texttt{.csv} formátumba, ügyelve a kapcsolásokra. Majd ezeket a táblákat \texttt{MySQLWorkbench} segítségével importáltam. \texttt{.csv} állományok mintája:
+Az adatokat egy \texttt{C++} kóddal generáltam \texttt{.csv} formátumba, ügyelve a kapcsolásokra. Majd ezeket a táblákat \texttt{MySQLWorkbench} segítségével importáltam.A \texttt{.csv} állományok mintája:
 \begin{python}
 c1p1, c2, c3, c4
 0, 1, 25, 9707
@@ -104,7 +105,7 @@ c1p1, c2, c3, c4
 \newpage
 \Section{\texttt{EXPLAIN} a gyakorlatban}
 
-A MySQLWorkbench grafikus képeit fogom használni melyeket újraalkottam minőségük miatt. Ez a módszer sokkal jobban szemlélteti miképpen dolgozza fel az utasításokat az adatbázis kezelő motorja.
+A \texttt{MySQL Workbench} grafikus képeit fogom használni melyeket újraalkottam minőségük miatt. Ez a módszer sokkal jobban szemlélteti miképpen dolgozza fel az utasításokat az adatbázis kezelő motorja.
 
 \SubSection{Egyszerű lekérdezés}
 Vizsgáljuk a következő lekérdezést:
@@ -118,7 +119,7 @@ SELECT * from thesis.T1 WHERE c3=25;
 \label{fig:schema}
 \end{figure}
 
-A program által előállított végrehajtási terven látható, hogy a \texttt{T1} -es tábla összes sorát át kell vizsgálni a megfelelő értékek megtalálásához. Erre nyújthat megoldást a vizsgált oszlop indexelése, melynek segítségével optimális sebességgel lehet meghatározni az értékek lehetséges helyeit.
+A program által előállított végrehajtási terven látható, hogy a \texttt{T1} -es tábla összes sorát át kell vizsgálni a megfelelő értékek megtalálásához. Erre nyújthat megoldást a vizsgált oszlop indexelése, melynek segítségével optimális sebességgel lehet meghatározni az értékek helyét.
 
 Indexek hozzáadása a \texttt{c3} -as oszlophoz:
 \begin{python} 
@@ -220,4 +221,4 @@ A negyedik vizsgálatban mind a két tábla használt oszlopát indexekkel látt
 \end{figure}
 Ezen az ábrán azt vehetjük észre, hogy a \texttt{T3} -as táblánál is használatban vannak az indexek, így már sebesség optimális a lekérdezés.
 
-Az ábrákon látható query cost megtévesztő lehet, hisz arra enged következtetni, hogy nem érdemes indexelést használni ebben az esetben, viszont a lekérdezés sebességének vizsgálata egyértelműen mutatja, hogy az indexek használata jelentős sebesség növekedéssel járt. 
+Az ábrákon látható \texttt{query cost} megtévesztő lehet, hisz arra enged következtetni, hogy nem érdemes indexelést használni ebben az esetben, viszont a lekérdezés sebességének vizsgálata egyértelműen mutatja, hogy az indexek használata jelentős sebesség növekedéssel járt. 

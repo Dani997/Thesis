@@ -68,9 +68,7 @@ A \texttt{Connector}, \texttt{MySQL} alapszabványú drivereket biztosít külö
 A következő \texttt{MySQL} által fejlesztett driverek érhetőek el: \newline
 \texttt{ADO.NET}, \texttt{ODBC}, \texttt{JDBC}, \texttt{Node.js}, \texttt{Python}, \texttt{C++}, \texttt{C} és \texttt{C API} a klienshez. \newline
 Az alábbiakat pedig a \texttt{MySQL} közössége fejleszti:\newline
-\texttt{PHP}, \texttt{Perl}, \texttt{Ruby}, \texttt{C+ Wrapper}.
-
-*https://www.mysql.com/products/connector/
+\texttt{PHP}, \texttt{Perl}, \texttt{Ruby}, \texttt{C+ Wrapper}. \cite{connector}
 
 \SubSection{A Connector/C++ használata}
 
@@ -90,7 +88,8 @@ Ezután szükség lesz egy külön felhasználóra amellyel a program csatlakozn
 
 \SubSection{Első program}
 
-Hozzunk létre egy \texttt{connectortest.cpp} nevű fájlt.
+Kipróbálásra a legegyszerűbben a programok, mysql\_speed mappában lévő anyagokkal lehetséges.
+
 Szükséges osztályok létrehozása:
 \begin{cpp}
 	sql::Driver *driver;
@@ -131,7 +130,7 @@ Futtatáshoz és fordításhoz a következő parancsokat használhatjuk:
 	
 	./connectortest.out
 \end{python}
-
+ \cite{connector_program}
 \Section{Connector proxy létrehozása}
 
 Azt feltételezhetjük, hogy a rendelkezésre álló MySQL elérési felületet érdemes megtartani valamilyen formában a lekérdezések optimalizálása során. Ez többek között az alábbiakkal indokolható.
@@ -164,7 +163,7 @@ Ennek az egyik igen fontos eleme az előzetes kiértékelő, amely a kapott lek�
 	\item Mivel ennek egy gyors döntést kell hoznia, a lekérdezést nem fogja végrehajtani, ezért csak egy becslést ad arra, hogy melyik végrehajtási mód lehet megfelelő.
 	\item A kimenete egyszerűen csak egy logikai érték.
 	\item Figyelembe kell vennie a lekérdezés összetettségét, az aktuálisan rendelkezésre álló számítási kapacitásokat, és adatbázisban lévő adatok mennyiségét.
-	\item Adhatunk lehetőséget a felhasználónak, hogy direkt módon döntsön a feldolgozás menetéről. Ha a felhasználó ismeri a rendszer előnyeit, hátrányait olykor könnyedén dönthet arról, hogy használja -e az OpenCL-es kiértékelést. Például ha sok visszatérő sorrá számít akkor használja, ha nem biztos, akkor automatikus módban hagyja.
+	\item Adhatunk lehetőséget a felhasználónak, hogy direkt módon döntsön a feldolgozás menetéről. Ha a felhasználó ismeri a rendszer előnyeit, hátrányait olykor könnyedén dönthet arról, hogy használja -e az \texttt{OpenCL}-es kiértékelést. Például ha sok visszatérő sorrá számít akkor használja, ha nem biztos, akkor automatikus módban hagyja.
 \end{itemize}
 
 A következő fontos elem a lekérdezés átalakítása, amely a lekérdezést szétválasztja adatgyűjtési és kiértékelési részekre.

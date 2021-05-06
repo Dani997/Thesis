@@ -5,7 +5,7 @@ Az alap ötlet egyszerű. A MySQL szerverről lekérjük a tábla tartalmát, am
 \Section{Adatok előkészítése}
 
 \SubSection{Táblák tömbbé alakítása}
-Ahhoz, hogy \texttt{OpenCL} el kezelni tudjuk az adatokat először szükség lesz egy struktúrára ami reprezentálja az adatbázis tábla felépítését. Az az a struktúra adattagjainak típusa egyezzen meg a táblázat oszlopainak típusával. Ezek után ebből létre kell hoznunk egy tömböt melynek hossza legalább annyi, mint a tábla sorainak száma.
+Ahhoz, hogy \texttt{OpenCL} -el kezelni tudjuk az adatokat először szükségünk lesz egy struktúrára ami reprezentálja az adatbázis tábla felépítését. Az az a struktúra adattagjainak típusa egyezzen meg a táblázat oszlopainak típusával. Ezek után ebből létre kell hoznunk egy tömböt melynek hossza legalább annyi, mint a tábla sorainak száma.
 
 \begin{figure}[h!]
 \centering
@@ -16,7 +16,7 @@ Ahhoz, hogy \texttt{OpenCL} el kezelni tudjuk az adatokat először szükség le
 
 \begin{itemize}
 \item A struktúra megfelel a tábla felépítésének.
-\item A tömb egy eleme, egy ilyen struktúra.
+\item A tömb típusa egy ilyen struktúra.
 \item A tömb egy eleme megfelel a tábla egy rekordjának azaz sorának.
 \item Egy elem adattagjai megfelelnek az adatbázis egyazon rekordjához tartozó mezőknek.
 \end{itemize}
@@ -59,6 +59,7 @@ while (res->next()) {
 \caption{Pointerek teljes működése}
 \label{fig:opencl}
 \end{figure}
+Kipróbáláshoz javasolt kód: programok, cp\_to\_array
 
 \Section{Globális és lokális méret meghatározása}
 Ennél a pontnál oda kell figyelni pár alapvető dologra:
@@ -99,7 +100,7 @@ Ezekhez a paraméterekhez még tetszőlegesen meg kell határozni a lokális mé
 
 
 $$ global\_size = 1024 $$
-$$interval\_size =  \left\lfloor \frac{table\_size }{globalsize\_size} \right\rfloor  +1  $$
+$$interval\_size =  \left\lceil \frac{table\_size }{globalsize\_size} \right\rceil  $$
 
 
 \SubSection{A kernelkód működése}
@@ -116,6 +117,8 @@ Itt már nem munkacsoportonként, hanem feldolgozó elemenként látjuk a folyam
 \newpage
 \Section{Eredmény kiolvasása}
 A kernelkód működéséből látjuk, hogy több módszert is tudunk alkalmazni az elemek kiolvasására. A találatok számát tartalmazó tömböt biztosan ki kell másolnunk, de kimenetre vonatkozóan nézzük meg az alábbi lehetőségeket.
+
+Megtekintésre javasolt teljes kód: programok, cp\_buffer
 \SubSection{Az elemek kiolvasása egyben}
 
 Dönthetünk úgy, hogy kimásoljuk a teljes kimenetet:
@@ -152,8 +155,8 @@ clStatus = clEnqueueReadBuffer(command_queue, TableResult_clmem, CL_TRUE,
 }
 \end{python}
 
-Kiolvasásnál megadjuk az eltolást amit az előző módon számolunk annyi különbséggel, hogy megadjuk egy elem memória méretét:
-$$i * interval\_size * sizeof(TableResultType)$$ezután megadjuk, hogy az eltolástól kezdve mekkora memória méretet szeretnénk kiolvasni: $$result\_counter[i] * sizeof(TableResultType)$$Ezen kívül a másolás cél memóriacímét mindig eltoljuk, az eddigi találatok számával: $$\&result[count].$$
+Kiolvasásnál megadjuk az eltolást amit az előző módon számolunk annyi különbséggel, hogy megszorozzuk egy elem memória méretével:
+$$i * interval\_size * sizeof(TableResultType)$$ezután megadjuk, hogy az eltolástól kezdve mekkora memória méretet szeretnénk kiolvasni, ezt a számlálóból tudjuk: $$result\_counter[i] * sizeof(TableResultType)$$Ezen kívül a másolás cél memóriacímét mindig eltoljuk, az eddigi találatok számával: $$\&result[count].$$
 Ha memóriát is szeretnénk spórolni, megtehetjük azt is, hogy először összeadjuk a találatokat és az alapján foglaljuk le a memóriaterületet a kiolvasáshoz.
 \begin{figure}[h!]
 \centering
@@ -165,9 +168,11 @@ Ha memóriát is szeretnénk spórolni, megtehetjük azt is, hogy először öss
 \Section{Összetett lekérdezés}
 
 Az előzőekben taglalt elméleti részek egy táblás lekérdezésekre vonatkozóan próbálták szemléltetni, milyen logika alapján lehet egy \texttt{SQL} lekérdezést \texttt{GPU} -n párhuzamosítva végrehajtani.
-Most gondoljuk át, miképpen lehetne megoldani kettő vagy több tábla összekapcsolását. Első lépésben a lekérdezést egy-egy táblára vonatkozó részekre. Ezzel két tábla kapcsolása esetén létrejöhet két különálló kernel amelyek például a szűréseket végzik a táblákon. Ennél a lépélnél két dolgot is szükséges kiemelni. Egyrészt ezeknek a kerneleknek az előállított eredményét nem kell kiolvasni a pufferekből, ugyanis ez a globális memóriában van, így átadható másik kernel számára is. Másrészt pedig ezek a kernelek ha van kapacitás, akkor futhatnak párhuzamosan is, ezt úgy lehet elérni, hogy külön parancssort hozunk létre számukra.
 
-Miután minden nem összekapcsolást végző kernel befejezte a munkát, adjuk át a szükséges paramétereket a befejező kernelnek. A paraméter lista elég hosszú lesz, ennek az az oka, hogy az eredmények kiolvasása elő észében taglalt módon kell végig menni a szűrt táblákon. 
+Most gondoljuk át, miképpen lehetne megoldani kettő vagy több tábla összekapcsolását. 
+Első lépésben bontsuk a lekérdezést egy-egy táblára vonatkozó részekre. Ezzel két tábla kapcsolása esetén létrejöhet két különálló kernel amelyek például a szűréseket végzik a táblákon. Ennél a lépésnél két dolgot is szükséges kiemelni. Egyrészt ezeknek a kerneleknek az előállított eredményét nem kell kiolvasni a pufferekből, ugyanis ez a globális memóriában van, így átadható másik kernel számára is. Másrészt pedig ezek a kernelek ha van kapacitás, akkor futhatnak párhuzamosan is, ezt úgy lehet elérni, hogy külön parancssort hozunk létre számukra.
+
+Miután minden nem összekapcsolást végző kernel befejezte a munkát, adjuk át a szükséges paramétereket a befejező kernelnek. A paraméter lista elég hosszú lesz, ennek az az oka, hogy az eredmények kiolvasása elő részében taglalt módon kell végig menni a szűrt táblákon. 
 
 Ennek a kernelnek a globális mérete egyezzen meg a lekérdezésben szereplő legnagyobb tábla globális méretével és ez a tábla szerepeljen a külső ciklusban. Az eredményeket változatlan módokon lehet majd kiolvasni a főprogramba.
 
@@ -181,4 +186,4 @@ Ennek a kernelnek a globális mérete egyezzen meg a lekérdezésben szereplő l
 Az 1. és 2. kernel az előzőekben taglalt módon előállítja saját eredményeit (zöld rész). 
 A 3. kernel megkapja a két táblát, a 2. tábla méretét és az előző két kernel által előállított eredményeket.
 Az első eredmény kiolvasási módszer alkalmazásával és a kulcsok figyelésével a két táblát összekapcsoljuk és előállítjuk az eredményt.
-A táblák méretére nincsen szükség, ugyanis az eredmény biztosan nem tartalmaz olyan indexet ami kívül esne az eredeti táblákon. A második táblánál viszont szükség van a globális méretre és az intervallum méretre a kiolvasáshoz.
+A táblák méretére nincsen szükség, ugyanis az eredmény biztosan nem tartalmaz olyan indexet ami kívül esne az eredeti táblákon. A második táblánál viszont szükség van a globális méretre is a kiolvasáshoz.

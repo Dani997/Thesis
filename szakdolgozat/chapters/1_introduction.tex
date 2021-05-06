@@ -4,11 +4,11 @@ Napjainkban viszonylag kevés módszer módszer áll rendelkezésünkre, ha egy 
 
 Az adatbázis rendszerek képesek megmutatni, miként fognak végrehajtani egy-egy lekérdezést, így ezt felhasználva lehetőségünk van olyan módosításokat végrehajtani amelyekkel javíthatjuk a teljesítményt. De sajnos bizonyos esetekben ez olyan költségekkel járhat, mint az adatbázis teljes újratervezése.
 
-A hatékonyság növelésének egy megoldása lehet egy saját kliens alkalmazás elkészítése. Ezzel olyan módon szeretnénk csökkenti a lekérdezések sebességét, hogy a számítás igényes műveleteket, nem az adatbázis szerver, hanem a kliens gép erőforrásaival végeztetjük el. Ekkor kerül elő az a felvetés, hogy ki lehetne -e használni a grafikuskártya köztudottan magas számítási teljesítményét.
+A hatékonyság növelésének egyik megoldása lehet egy saját kliens alkalmazás elkészítése. Ezzel olyan módon szeretnénk csökkenti a lekérdezések sebességét, hogy a számítás igényes műveleteket, nem az adatbázis szerver, hanem a kliens gép erőforrásaival végeztetjük el. Ekkor kerül elő az a felvetés, hogy ki lehetne használni a grafikuskártya köztudottan magas számítási teljesítményét.
 
-Ennek a kiemelkedő feldolgozó képessége a sok processzormagból és az ebből adódó párhuzamosságból adódik. Jelenleg is használják ezeket az eszközöket különféle számítások elvégzésére, például kripto pénzek bányászatakor, amikor úgy nevezett HESH -eket állítanak elő. Egyes esetekben a grafikus kártyák akár 800x is gyorsabbak lehetnek mint egy CPU.
+Ennek a kiemelkedő feldolgozó képessége a sok processzormagból és az ebből származó párhuzamosságból adódik. Jelenleg is használják ezeket az eszközöket különféle számítások elvégzésére, például kripto pénzek bányászatakor, amikor úgy nevezett hesh -eket állítanak elő. Egyes esetekben a grafikus kártyák ennél a folyamatnál akár 800x is gyorsabbak lehetnek mint egy CPU (\textit{Central Processing Unit}). \cite{crypto}
 
-Tehát jogosan merül fel a kérdés, hogyan lehet SQL lekérdezéseket megvalósítani GPU -n, illetve milyen előnyökkel és hátrányokkal járhat ez a megoldás.
+Tehát jogosan merül fel a kérdés, hogyan lehet SQL lekérdezéseket megvalósítani GPU (\textit{Graphics Processing Unit}) -n, illetve milyen előnyökkel és hátrányokkal járhat ez a megoldás.
 
 
 
@@ -21,6 +21,5 @@ Tehát jogosan merül fel a kérdés, hogyan lehet SQL lekérdezéseket megvaló
 
 %Felmerül tehát a kérdés, milyen egyéb számítások során lehetne még kihasználni az eszköz nagy mértékű párhuzamosíthatóságát.
 
-https://bitemycoin.com/cryptocurrency-mining/whats-the-difference-between-cpu-and-gpu-mining/
 
 

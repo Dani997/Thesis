@@ -1,13 +1,15 @@
 \Chapter{Mérések, összehasonlítások}
 
-Ebben a fejezetben megvizsgáljuk a program különböző részeit futási idő szempontjából. Első sorban nézzük azokat a részeket amelyek nagyban függnek a táblamérettől vagy az előállítani kívánt kimenettől.  
+%Ebben a fejezetben megvizsgáljuk a program különböző részeit futási idő szempontjából. Első sorban nézzük azokat a részeket amelyek nagyban függnek a táblamérettől vagy az előállítani kívánt kimenettől.  
 
 \Section{Adatok mozgatásának sebességei}
 
 Ebben a részben azt vizsgálom, mennyi idő eljuttatni az adatokat a \texttt{MySQL} szerverről a memóriába, azokat pufferekbe másolni majd onnan az eredményeket vissza ki.
-Annak érdekében, hogy az eredmények pontosabbak legyenek, minden eredmény 5 futás átlaga.
+Annak érdekében, hogy a mérések pontosabbak legyenek, minden eredmény 5 futás átlaga.
 
 \SubSection{A MySQL lekérdezés sebessége}
+
+A méréseket a programok, sql\_speed mappáan található kódokkal végeztem.
 
 Ezt a sebességet a következő két sor vizsgálatával kaphatjuk meg a legpontosabban:
 \begin{python}
@@ -24,7 +26,7 @@ while(i <= 1048576){
 \end{python}
 \begin{itemize}
 \item A LIMIT hozzáadása a lekérdezéshez nem növeli annak idejét.
-\item A tábla tartalmaz elsődleges kulcsot, enélkül a lekérdezések ideje nő.
+\item A tábla tartalmaz elsődleges kulcsot, enélkül a lekérdezések ideje megnő.
 \item A lekérdendő oszlopokat manuálisan módosítottam a programban: 
 \begin{itemize} 
 \item \texttt{SELECT c1p1 FROM ...}
@@ -42,15 +44,16 @@ while(i <= 1048576){
 Az ábrán, egyértelműen látható, hogy a sorok számának növekedésével az idő is lineárisan nő.
 A jelmagyarázatnál látható egyenes egyenletekből becsléseket lehet készíteni adott paraméterekkel rendelkező szűrés nélküli lekérdezéshez. 
 
-Tegyük fel, hogy a négy oszlop felett az időnövekedés lineáris, így több oszlopra egyszerű szorzással megkaphatjuk az időket.
-
-4 és 6 oszlop esetén:
-$$ x = \text{sorok száma}/32768 - 1 $$
+Négy oszlop felett használjuk a 3 és 4 oszlop közötti növekedés mértékét, feltételezve, hogy innentől ez már nem változik. A kettő között eltérés lineáris becslésének képlete: 
+$$7,79E-05*x + 1,13, R^2=0,992$$ 
+ahhol
+ $$x = sorok száma / 32768 - 1$$
+4 oszlop esetén:
 $$ 7813 * \text{sorok száma} + 7783 = \text{lekérdezés ideje}$$
-$$ \text{lekérdezés ideje} * 1.5 = \text{lekérdezés ideje 6 oszlopra} $$
 
 
 \SubSection{A query válaszának átmásolása a saját tömbbe}
+A vizsgálathoz használt kód a programok, cp\_to\_array mappában található.
 A lekérdezésből kapott választ át kell másolni az általunk létrehozott tömbbe. Ez az egyik legköltségesebb művelet, ezért optimalizálásként célszerű csak a felhasznált oszlopokat lekérni, ez vonatkozik az előző alfejezetre is.
 A mért program szakasz:
 \begin{python}
@@ -78,16 +81,18 @@ Az mérési módszer megegyezik az előzőekben használtakkal.
 \label{fig:schema}
 \end{figure}
 A grafikonon két dolgot vehetünk észre azonnal. Az egyik az, hogy ez a folyamat lassabb mint maga a lekérdezés a másik pedig, hogy drasztikusabb a növekedés az oszlopok számának sokasodásával.
-Tegyük fel, hogy 4 oszlop felett már nincs szignifikáns eltérés az időnövekedésben. Ekkor használhatjuk az előbb is használt módszert a becslésekhez.
-
-Másolás becslése 4 és 6 oszlop esetén:
-$$ x = \text{sorok száma}/32768 - 1 $$
+Tételezzük fel, csak úgy mint az előző esetben, hogy 4 oszlop felett nem több az elérés, mint 3 és 4 között.
+A két oszlop közötti eltérés lineáris becslése:
+$$-6,1E-04*x + 1,32, R^2=0,99$$ 
+ahhol
+ $$x = sorok száma / 32768 -1 $$
+Becslés 4 oszlop esetén:
 $$ 10019 * x + 7692 = \text{másolás ideje}$$
-$$ \text{másolás ideje} * 1.5 = \text{másolás ideje 6 oszlopra} $$
 
 \SubSection{Adatok bemásolása a pufferekbe}
 
 Az adatok átmásolása az OpenCL puffereibe szintén egy olyan része a programnak, ami sok időt emészthet fel.
+Használt kódok: programok, cp\_buffer
 Vizsgált rész:
 
 \begin{python}
@@ -174,7 +179,7 @@ Túl alacsony globális méret hatásai:
 A méréseket ezen pontok alapján a következők szerint végeztem.
 A globális méret változzon 1 - $2^{20}$ értékig, a lokális pedig 1 - 1024 ig négyzetes lépcsőkkel, az oszthatóságra figyelve.
 
-A vizsgált kódrészlet:
+A vizsgált kódrészlet: (gantt-hez programok, gantt. grafikonokhoz programok, global\_size\_speed)
 \begin{python}  
 timer.start();
 
@@ -213,6 +218,8 @@ Minden esetben a Lokális méret 32 és a visszatérő értékek száma körülb
 \end{figure}
 
 Látható, hogy a túl alacsony globális méret túl magas kernel futási időt eredményez. Túl nagy méret esetében pedig az eredmények kezelésének ideje válik számításigényessé.
+
+A diagram előállításához használt kód megtalálható a programok, gantt mappában
 
 \begin{figure}[h!]
 \centering
@@ -260,7 +267,7 @@ A \texttt{Connector} programot pedig 3 részre
 Az eredmény kezelése résznél azt vizsgáljuk melyik esetben gyorsabb az eredményeket fájlba írni.
 
 \SubSection{Egy táblás lekérdezés}
-
+Forrás: programok, program\_test, where mappa.
 \begin{python}
 SELECT * FROM speedtest_1048576 WHERE c3 = 1 AND c4 > 5001;
 	5307 row(s) returned
@@ -361,6 +368,10 @@ Ha van indexelés abban az esetben ez a szám eléri a 37 -et.\newline
 A grafikonon a \texttt{CONN 500k} és \texttt{CONN 500k i} szinte egymást fedi, amiből látjuk, hogy ha a válaszban visszatérő sorok száma magas, akkor az indexelés hatékonysága alacsony.
 
 \SubSection{Két táblás lekérdezés}
+Forrás: programok, program\_test, join mappa.
+
+Ehhez a részhez új adatbázist hoztam létre, az \texttt{explan} résznél használthoz hasonlóan, de jelentősen nagyobb méretekkel, erre a tábla neve utal.
+Generáláshoz szükséges kód megtalálható a \texttt{table gen} mappában.
 
 \begin{python}
 SELECT TM.c1p1, TS.c1p1, TM.c3*TS.c3 FROM speed2.speed_262144 AS TM 
