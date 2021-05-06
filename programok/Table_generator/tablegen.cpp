@@ -24,7 +24,6 @@ int main()
     for(i=65536; i<131072; i++)
     myfile << i << "," << rand()%101<< "," << rand()%10001<< "," << rand()%20001<< "," <<  rand()%65536 << endl;
 
-
     myfile.close();
     myfile.open("speed_65536.csv");
     myfile << "c1p1" << "," << "c2" << "," << "c3" << "," << "c4" <<  endl;
