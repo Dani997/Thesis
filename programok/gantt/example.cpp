@@ -1,7 +1,6 @@
 /*
-Build: g++ cltest2.cpp -o cltest2 -lOpenCL
-g++ -D_GLIBCXX_USE_CXX11_ABI=0 example.cpp -o example.out -lOpenCL
--lmysqlcppconn */
+g++ -D_GLIBCXX_USE_CXX11_ABI=0 example.cpp -o example.out -lOpenCL -lmysqlcppconn 
+*/
 #include "head.hpp"
 #include "timer_class.hpp"
 #define PROGRAM_FILE "examp.cl"
@@ -100,9 +99,7 @@ timer.start();
 	clStatus = clFinish(command_queue);
 cout  <<  timer.elapsedMicroseconds() << endl;
 
-int s=0;
-  for(int ix=0; ix<global_size; ix++)
-	s+=result_counter[ix];
+cout << counter_totalizer(result_counter, global_size) << endl;;
 
     ofstream myfile;
     myfile.open("res.csv");
@@ -137,9 +134,7 @@ cout << timer.elapsedMicroseconds()<< endl;
 
 }
 
-void read_kernel_code(char
-	const *file, size_t *kernel_length,
-	string *kernel_string)
+void read_kernel_code(char	const *file, size_t *kernel_length,  string *kernel_string)
 {
 	FILE * fp;
 	fp = fopen(file, "r");
@@ -252,4 +247,14 @@ void size_calculator(size_t *global, size_t *local, int *interval, int table_siz
 	*interval = table_size / *global;
 	else
 	*interval = table_size / *global + 1;
+}
+
+int counter_totalizer(int *counter, int size) 
+{
+
+	int s=0;
+  for(int ix=0; ix<size; ix++)
+	s+=counter[ix];
+	
+	return s;
 }

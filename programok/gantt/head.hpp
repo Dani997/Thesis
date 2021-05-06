@@ -36,3 +36,5 @@ cl_device_id create_device(const int gpu);
 
 void size_calculator(size_t* global, size_t* local, int* interval, int table_size);
 
+int counter_totalizer(int *counter, int size);
+
