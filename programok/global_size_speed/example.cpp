@@ -1,4 +1,5 @@
 /*
+Build: g++ cltest2.cpp -o cltest2 -lOpenCL
 g++ -D_GLIBCXX_USE_CXX11_ABI=0 example.cpp -o example.out -lOpenCL
 -lmysqlcppconn */
 #include "head.hpp"
@@ -9,6 +10,7 @@ g++ -D_GLIBCXX_USE_CXX11_ABI=0 example.cpp -o example.out -lOpenCL
 int main(void)
 {
   Timer timer;
+
 	size_t kernel_length;
 	string kernel_string;
 	read_kernel_code(PROGRAM_FILE, &kernel_length, &kernel_string);
@@ -31,7 +33,7 @@ for(int i= 1; i<=1024; i+=i)
 		}
 	//cout << i << "; " << j<< "; " << k<< endl;
 
-	size_t local_size =i;
+	size_t local_size = i;
 	size_t global_size=j;
 	int interval_size=k;
 
@@ -56,24 +58,19 @@ for(int i= 1; i<=1024; i+=i)
 	cl_mem TableResult_clmem = clCreateBuffer(context, CL_MEM_READ_WRITE, t1_size* sizeof(Table1Type), NULL, &clStatus);
 	cl_mem Result_indexes_list_clmem = clCreateBuffer(context, CL_MEM_READ_WRITE, global_size* sizeof(int), NULL, &clStatus);
 
-
-  //Bemeneti bufferek feltoltese
 	clStatus = clEnqueueWriteBuffer(command_queue, Table1_clmem, CL_TRUE, 0, t1_size* sizeof(Table1Type), t1, 0,	NULL, NULL);
 	clStatus = clEnqueueWriteBuffer(command_queue, Table_size_clmem, CL_TRUE, 0, sizeof(int), &t1_size, 0,	NULL, NULL);
 	clStatus = clEnqueueWriteBuffer(command_queue, Interval_size_clmem, CL_TRUE, 0, sizeof(int), &interval_size, 0, NULL, NULL);
 
-
-	// Create a program from the kernel source
 	program =
 		clCreateProgramWithSource(context, 1, (const char **) &kernel_string,
 			(const size_t *) &kernel_length, &clStatus);
 
 	clStatus = clBuildProgram(program, 1, &device, NULL, NULL, NULL);
 
-
-	// Kernel letrehozasa
 	kernel = clCreateKernel(program, "examp", &clStatus);
-timer.start();
+
+  timer.start();
 	clStatus =
 		clSetKernelArg(kernel, 0, sizeof(cl_mem), (Table1Type*) &Table1_clmem);
 	clStatus =
@@ -84,6 +81,8 @@ timer.start();
 		clSetKernelArg(kernel, 3, sizeof(cl_mem), (int*) &Table_size_clmem);
 	clStatus =
 		clSetKernelArg(kernel, 4, sizeof(cl_mem), (int*) &Interval_size_clmem);
+
+int sum =0;
 
 	clStatus = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
 
@@ -114,17 +113,19 @@ timer.start();
 	clStatus = clReleaseCommandQueue(command_queue);
 	clStatus = clReleaseDevice(device);
 
-	clStatus = clReleaseMemObject(Table1_clmem);
-	clStatus = clReleaseMemObject(Table_size_clmem);
-	clStatus = clReleaseMemObject(Interval_size_clmem);
-  	clStatus = clReleaseMemObject(TableResult_clmem);
-	clStatus = clReleaseMemObject(Result_indexes_list_clmem);
+	  clStatus = clReleaseMemObject(Table1_clmem);
+	  clStatus = clReleaseMemObject(Table_size_clmem);
+	  clStatus = clReleaseMemObject(Interval_size_clmem);
+	  clStatus = clReleaseMemObject(TableResult_clmem);
+	  clStatus = clReleaseMemObject(Result_indexes_list_clmem);
+
+	free(result);
+	free(result_counter);
 
 	}	
 myfile << endl;
-
 	}
-
+	free(t1);
 	return 0;
 }
 
@@ -167,12 +168,9 @@ void load_database(Table1Type **T1, int *T1_size)
 
 		con->setSchema("speed_test");
 
-	cout << timer2.elapsedMicroseconds() << " szerver kapcs"<< endl;
-	timer2.start();
 		pstmt = con->prepareStatement("SELECT *FROM speedtest_1048576");
 		res = pstmt->executeQuery();
-	cout << timer2.elapsedMicroseconds() << endl;
-	timer2.start();
+
 		int i = 0;
 		*T1_size = res->rowsCount();
 		*T1 = (Table1Type*) malloc(sizeof(Table1Type) * *T1_size);
@@ -188,7 +186,6 @@ void load_database(Table1Type **T1, int *T1_size)
 		delete res;
 		delete pstmt;
 
-	cout << timer2.elapsedMicroseconds() << endl;
 	}
 	catch (sql::SQLException &e)
 	{
@@ -209,22 +206,17 @@ cl_device_id create_device(const int gpu)
 	cl_device_id dev;
 	int err;
 
-	/*Identify a platform */
 	err = clGetPlatformIDs(1, &platform, NULL);
 	if (err < 0)
 	{
 		perror("Couldn't identify a platform");
 		exit(1);
 	}
-
-	// Access a device
 	if (gpu == 1)
 	{
-		// GPU
 		err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &dev, NULL);
 		if (err == CL_DEVICE_NOT_FOUND)
 		{
-			// CPU
 			err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_CPU, 1, &dev, NULL);
 		}
 	}
@@ -240,4 +232,14 @@ cl_device_id create_device(const int gpu)
 	}
 
 	return dev;
+}
+
+
+int counter_totalizer(int *counter, int size) 
+{
+	int s=0;
+  for(int ix=0; ix<size; ix++)
+	s+=counter[ix];
+	
+	return s;
 }

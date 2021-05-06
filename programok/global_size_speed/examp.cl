@@ -6,8 +6,8 @@ typedef struct {
 } Table1Type;
 typedef struct {
   int index;
- // int calc1;
- // int calc2;
+  int calc1;
+  int calc2;
 } TableResultType;
 
 
@@ -29,8 +29,9 @@ for(i = x ; i < x+ *Range; i++)
     {
       loc = index* *Range + Counter[index];
         ANS[ loc ].index = i;
-        //ANS[ loc ].calc1 =  T1[i].c3 * T1[i].c4;
-       // ANS[ loc ].calc2 = T1[i].c2 * T1[i].c3;
+        ANS[ loc ].calc1 =  T1[i].c3 * T1[i].c4;
+        ANS[ loc ].calc2 = T1[i].c2 * T1[i].c3;
+
         atomic_inc(&Counter[index]);
 
     }

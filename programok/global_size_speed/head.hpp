@@ -23,8 +23,8 @@ typedef struct {
 
 typedef struct {
   int index;
- //   int calc1;
-  //int calc2;
+    int calc1;
+  int calc2;
 
 } TableResultType;
 
