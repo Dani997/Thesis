@@ -360,14 +360,14 @@ Lekérdezés, kernel(ek) futása, eredmény kiolvasás, eredmény kiírás.
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=\textwidth]{images/test/where.png}
+\includegraphics[width=\textwidth]{images/test/where3.png}
 \caption{Becslés csak a lekérdezésre.}
 \label{fig:where}
 \end{figure}
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=\textwidth]{images/test/where_write.png}
+\includegraphics[width=\textwidth]{images/test/where_write3.png}
 \caption{Becslés az eredmények kiírásával.}
 \label{fig:where_write}
 \end{figure}
@@ -469,7 +469,7 @@ Az \texttt{OpenCL} -es futási időket igyekeztem optimalizálni azzal, hogy a s
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=\textwidth]{images/test/join.png}
+\includegraphics[width=\textwidth]{images/test/join2.png}
 \caption{Becslés csak a lekérdezésre.}
 \label{fig:join}
 \end{figure}
@@ -480,5 +480,5 @@ A táblakapcsolás nélküli lekérdezéshez viszonyított drámai teljesítmén
 
 Valamilyen indexelési módszer használatával az \texttt{OpenCL} megvalósítás is optimalizálható lenne, ám ez bonyolult és költséges lehet.
 
-Az ábrán jól látható, hogy már 839 visszatérő sornál is a CL megvalósítás a leglassabb. A 16 soros lekérdezés pedig alig előzi meg az indexelt lekérdezést.
+A \Aref{fig:join} ábrán jól látható, hogy már 839 visszatérő sornál is a CL megvalósítás a leglassabb. A 16 soros lekérdezés pedig alig előzi meg az indexelt lekérdezést.
 Az eredményekből azt is látjuk, hogy nagyobb mértékben nőtt a futási ideje a CL programnak, azaz még több visszatérő sor eseten a módszer még kevésbé hatékony.
