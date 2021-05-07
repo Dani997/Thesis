@@ -7,11 +7,11 @@ A fejlettebb adatbázismotorok esetében közvetlenül elérhetőek beépített 
 \Section{Indexelés}
 %https://www.sqlshack.com/query-optimization-techniques-in-sql-server-the-basics/
 
-Az adatbázis egy táblájának adataihoz kétféleképpen lehet hozzáférni: úgynevezett szkenneléssel illetve kereséssel. A keresés nem más, mint mikor valamilyen szűrő feltétel alapján választunk ki rekordokat. Ezek a szűrőfeltételek általában keskeny szűrők, azaz sok adatból kevés értékre igazak. A szkennelés, mikor egy teljes indexet keresünk a megfelelő értékek visszaadásához. Egy tábla akár több millió sorból is állhat, kereséskor ennek minden sorát át kell vizsgálni. Ugyan ezen a táblán sokkal gyorsabban is át lehet haladni ha az indexek bináris fáját vizsgáljuk, ilyenkor anélkül adható vissza a végeredmény, hogy minden rekordot át kellene vizsgálni.
+Az adatbázis egy táblájának adataihoz kétféleképpen lehet hozzáférni: úgynevezett szkenneléssel illetve kereséssel. A keresés nem más, mint mikor valamilyen szűrő feltétel alapján választunk ki rekordokat. Ezek a szűrőfeltételek általában keskeny szűrők, azaz sok adatból kevés értékre igazak. A szkennelés, mikor egy teljes indexet keresünk a megfelelő értékek visszaadásához. Egy tábla akár több millió sorból is állhat, kereséskor ennek minden sorát át kell vizsgálni. Ugyan ezen a táblán sokkal gyorsabban is át lehet haladni, ha az indexek bináris fáját vizsgáljuk, ilyenkor anélkül adható vissza a végeredmény, hogy minden rekordot át kellene vizsgálni.
 
 Néhány felmerülő szempontot láthatunk a következő pontokban, amelyre optimalizáláskor figyelni kell \cite{manolopoulos2012advanced}.
 \begin{itemize}
-\item Van-e olyan index amely használható a lekérdezéskor?
+\item Van-e olyan index, amely használható a lekérdezéskor?
 \item Ha nincs indexelés, akkor hozzunk létre?
 \item Elég gyakori az adott lekérdezés ahhoz, hogy ez megérje?
 \begin{itemize}
@@ -28,11 +28,11 @@ Néhány felmerülő szempontot láthatunk a következő pontokban, amelyre opti
 
 \Section{Normalizálás}
 
-A normalizálás az adatok adatbázisba szervezésének folyamata. Ez magába foglalja a táblák létrehozását és az azok közötti kapcsolatok kialakítását. Mindezt olyan szabályok szerint, melyek segítenek az adatok védelmében, az adatbázis rugalmassá tételében, a redundancia elkerülésében és a következetlen függőségek kiküszöbölésében.
+A normalizálás az adatok adatbázisba szervezésének folyamata. Ez magába foglalja a táblák létrehozását, és az azok közötti kapcsolatok kialakítását. Mindezt olyan szabályok szerint, melyek segítenek az adatok védelmében, az adatbázis rugalmassá tételében, a redundancia elkerülésében és a következetlen függőségek kiküszöbölésében.
 
 A redundancia pazarolja a lemezterületet és karbantartási problémákat okoz. Egyazon adat több helyen való tárolása igényli, hogy mindenhol ugyan úgy módosuljon, különben anomáliák jönnek létre.
 
-A következetlen függőség a táblák nem megfelelően felépítéséből adódik. Bizonyos adatelemek ha nem megfelelő táblába kerülnek, akkor nehezítik annak elérését, illetve teljesen megszakadhat az adatok megtalálásának útja.
+A következetlen függőség a táblák nem megfelelő felépítéséből adódik. Bizonyos adatelemek, ha nem megfelelő táblába kerülnek, akkor nehezítik annak elérését, illetve teljesen megszakadhat az adatok megtalálásának útja.
 
 Ezek kiküszöbölésére léteznek szabályok, melyeket normál formáknak nevezünk. Ha egy séma teljesíti az első normál forma előírásait, akkor azt mondjuk, hogy első normálformában van. A harmadik normálforma tekinthető a legtöbb alkalmazáshoz szükséges legmagasabb szintnek, bár összesen öt van \cite{normaliz}.
 
