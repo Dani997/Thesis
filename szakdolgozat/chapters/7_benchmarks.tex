@@ -247,7 +247,7 @@ A 16-os és 32-es méretek állnak legközelebb az ideális futási időhöz.
 \label{fig:global_size_2}
 \end{figure}
 
-\Aref{fig:global_size_2}. grafikonon egy olyan mérés látható, ahol a kernelben található feltételt úgy állítottam be, hogy megközelítőleg csak a tábla méretének 10\% -ával térjen vissza a lekérdezés.
+\Aref{fig:global_size_2}. grafikonon egy olyan mérés látható, ahol a kernelben található feltételt úgy állítottam be, hogy megközelítőleg csak a tábla méretének 10\%-ával térjen vissza a lekérdezés.
 Azt láthatjuk, hogy az előző középen lévő hullám lesimul, ez részben annak köszönhető, hogy a kernel futási ideje csökken azzal, hogy nem kell annyi indexet az eredmény tömbbe írnia.
 
 Azoknál a lekérdezéseknél a kernelnek nem csak egy indexszel kell visszatérnie, hanem több kalkulált értékkel is, ott is hasonló grafikonokat kapunk. De a kernel növekvő munkája és a megnövekedett adatmennyiség kiolvasása miatt a középen lévő hullám nagyobb és nehezebben lapul le.
@@ -257,7 +257,7 @@ Ezek alapján azt mondhatjuk, hogy közel ideális választás volt az 1024 mint
 \Section{Gyakorlati példák és következtetések}
 
 A hatékonyság megállapításához a \textit{A \texttt{MySQL} lekérdezés sebessége} részben használt módszert fogom alkalmazni.
-A fejezetben előfordulnak rövidítések: CONN - a \texttt{MySQL} \texttt{Connector} programra a CL pedig az \texttt{OpenCL} -t használó programra utal. 
+A fejezetben előfordulnak rövidítések:\newline CONN - a \texttt{MySQL} \texttt{Connec\-tor} programra a CL pedig az \texttt{OpenCL}-t használó programra utal. 
 A k betű ezres szorzót, az i betű pedig indexelés használatot jelöl.
 \newline Bontsuk az \texttt{OpenCL} programot négy részre:
 \begin{itemize}
@@ -375,8 +375,8 @@ Lekérdezés, kernel(ek) futása, eredmény kiolvasás, eredmény kiírás.
 A mérésekből a következő következtetéseket vonhatjuk le:
 \begin{itemize}
 	\item 0.5\%-os visszatérési arany esetében, ha nincs indexelés, akkor 7 lekérdezés után megtérülhetnek az \texttt{OpenCL} plusz költségei.
-	\item Ha van indexelés abban az esetben ez a szám eléri a 37 -et.\newline
-	50\%-os visszatérési aránynál már a 2. lekérdezésnél is nyereséges az \texttt{OpenCL} -es megvalósítás. 
+	\item Ha van indexelés abban az esetben ez a szám eléri a 37-et.\newline
+	50\%-os visszatérési aránynál már a 2. lekérdezésnél is nyereséges az \texttt{OpenCL}-es megvalósítás. 
 \end{itemize}
 
 \Aref{fig:where}. ábrán látható grafikonon a \texttt{CONN 500k} és \texttt{CONN 500k i} szinte egymást fedi, amiből látjuk, hogy ha a válaszban visszatérő sorok száma magas, akkor az indexelés hatékonysága alacsony.
@@ -465,7 +465,7 @@ Eredmény kiírás & 161 $\mu s$ & 1932 $\mu s$ \\
 \end{tabular}
 \end{table}	
 
-Az \texttt{OpenCL} -es futási időket igyekeztem optimalizálni azzal, hogy a szerverről csak a szükséges oszlopokat kértem le, így elkerülve a fölösleges adatok mozgatását.
+Az \texttt{OpenCL}-es futási időket igyekeztem optimalizálni azzal, hogy a szerverről csak a szükséges oszlopokat kértem le, így elkerülve a fölösleges adatok mozgatását.
 
 \begin{figure}[h!]
 \centering
@@ -480,5 +480,5 @@ A táblakapcsolás nélküli lekérdezéshez viszonyított drámai teljesítmén
 
 Valamilyen indexelési módszer használatával az \texttt{OpenCL} megvalósítás is optimalizálható lenne, ám ez bonyolult és költséges lehet.
 
-A \Aref{fig:join} ábrán jól látható, hogy már 839 visszatérő sornál is a CL megvalósítás a leglassabb. A 16 soros lekérdezés pedig alig előzi meg az indexelt lekérdezést.
+\Aref{fig:join} ábrán jól látható, hogy már 839 visszatérő sornál is a CL megvalósítás a leglassabb. A 16 soros lekérdezés pedig alig előzi meg az indexelt lekérdezést.
 Az eredményekből azt is látjuk, hogy nagyobb mértékben nőtt a futási ideje a CL programnak, azaz még több visszatérő sor eseten a módszer még kevésbé hatékony.

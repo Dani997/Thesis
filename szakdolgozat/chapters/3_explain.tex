@@ -134,7 +134,7 @@ SELECT * FROM thesis.T1 WHERE c3 = 25;
 
 A program által előállított végrehajtási terven látható (\ref{fig:explain_1_1}. ábra), hogy a \texttt{T1}-es tábla összes sorát át kell vizsgálni a megfelelő értékek megtalálásához. Erre nyújthat megoldást a vizsgált oszlop indexelése, melynek segítségével optimális sebességgel lehet meghatározni az értékek helyét.
 
-Indexek hozzáadása a \texttt{c3} -as oszlophoz:
+Indexek hozzáadása a \texttt{c3}-as oszlophoz:
 \begin{python} 
 ALTER TABLE thesis.T1 ADD INDEX (c3);
 \end{python}
@@ -217,7 +217,7 @@ Miután a \texttt{T3}-as tábla vizsgált oszlopát indexeléssel láttam el, sz
 
 \newpage
 
-A következő vizsgálatban csak \texttt{T1} \texttt{c2} -es oszlopa indexelt.
+A következő vizsgálatban csak \texttt{T1} \texttt{c2}-es oszlopa indexelt.
 
 \begin{figure}[h!]
 \centering

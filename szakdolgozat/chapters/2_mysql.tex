@@ -54,7 +54,7 @@ A denormalizálás célja az olvasási sebesség javítása azzal, hogy szándé
 Az adatbázis sebességét nem csak annak megfelelő kialakításával segíthetjük elő, hanem a megfelelő adatbázis-kezelő kiválasztásával és annak helyes konfigurálásával.
 Jelen esetben a \texttt{MySQL}-t használjuk, melyhez több motor is elérhető. Alapértelmezett módon ez az \texttt{InnoDB}, de ezen kívül elérhető a \texttt{MyISAM}-is. Utóbbinak hátránya, hogy nem támogatja a sor szintű zárolást, idegen kulcsokat és tranzakciókat. A \texttt{MyISAM} választása emiatt viszonylag ritkán tekinthető jobb döntésnek. Íme néhány fontosabb konfigurációs beállítás, amellyel javíthatjuk az adatbázisunk teljesítményét \cite{other_optimization}.
 \begin{itemize}
-\item \texttt{innodb buffer pool size}: A motor gyorsítótárának mérete. Elérheti a szerver memória 80-90\% -át is ha ez szükséges.
+\item \texttt{innodb buffer pool size}: A motor gyorsítótárának mérete. Elérheti a szerver memória 80-90\%-át is ha ez szükséges.
 \item \texttt{innodb io capacity}: Megadja a \texttt{MySQL}-nek, hogy hány I/O műveletet végezhet. Ezzel háttértárnak megfelelő korlát adható, így nem fog a szerver  egyszerre túl sok ilyen műveletet végezni.
 \item \texttt{query cache limit} és \texttt{query cache size}: Túl nagy terhelés esetén a gyorsítótár használhatatlan, ilyenkor érdemes kikapcsolni, hogy megspóroljuk annak kezelési költségét.
 \item \texttt{slow query log}, \texttt{long query time}: Megmutatja mely lekérdezések lassabbak a megadott időnél. Erről naplófájl készül (\texttt{.log} kiterjesztéssel) amely megmutatja, hány sort érint a lekérdezés, mikor és ki hajtotta végre.
