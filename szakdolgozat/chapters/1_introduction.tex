@@ -1,16 +1,14 @@
 \Chapter{Bevezetés}
 
-Napjainkban viszonylag kevés módszer módszer áll rendelkezésünkre, ha egy adatbázis működését optimalizálni szeretnénk.
+Az adatbázismotorok működésének optimalizálásához különféle módszerek állnak rendelkezésre. Ezek többségében egy-egy adott szoftverhez megfelelőek, általánosan alkalmazható módszerből kevés van.
 
-Az adatbázis rendszerek képesek megmutatni, miként fognak végrehajtani egy-egy lekérdezést, így ezt felhasználva lehetőségünk van olyan módosításokat végrehajtani amelyekkel javíthatjuk a teljesítményt. De sajnos bizonyos esetekben ez olyan költségekkel járhat, mint az adatbázis teljes újratervezése.
+Az adatbázis rendszerek képesek megmutatni, miként fognak végrehajtani egy-egy lekérdezést, így ezt felhasználva lehetőségünk van olyan módosításokat végrehajtani amelyekkel javíthatjuk a teljesítményt. Sajnos bizonyos esetekben ez olyan költségekkel járhat, mint az adatbázis teljes újratervezése.
 
-A hatékonyság növelésének egyik megoldása lehet egy saját kliens alkalmazás elkészítése. Ezzel olyan módon szeretnénk csökkenti a lekérdezések sebességét, hogy a számítás igényes műveleteket, nem az adatbázis szerver, hanem a kliens gép erőforrásaival végeztetjük el. Ekkor kerül elő az a felvetés, hogy ki lehetne használni a grafikuskártya köztudottan magas számítási teljesítményét.
+A hatékonyság növelésének egyik megoldása lehet egy saját kliens alkalmazás elkészítése. Ezzel olyan módon szeretnénk csökkenti a lekérdezések sebességét, hogy a számításigényes műveleteket nem az adatbázis szerver, hanem a kliens gép erőforrásaival végeztetjük el. A dolgozatban ez a megközelítés kerül bemutatásra.
 
-Ennek a kiemelkedő feldolgozó képessége a sok processzormagból és az ebből származó párhuzamosságból adódik. Jelenleg is használják ezeket az eszközöket különféle számítások elvégzésére, például kripto pénzek bányászatakor, amikor úgy nevezett hesh -eket állítanak elő. Egyes esetekben a grafikus kártyák ennél a folyamatnál akár 800x is gyorsabbak lehetnek mint egy CPU (\textit{Central Processing Unit}). \cite{crypto}
+Ekkor kerül elő az a felvetés, hogy ki lehetne használni a grafikus kártya köztudottan magas számítási teljesítményét és párhuzamosítási képességeit. Ez elsősorban a több processzormagos architektúrájából adódik. Jelenleg is használják ezeket az eszközöket különféle számítások elvégzésére, például kripto pénzek bányászatakor, amikor úgy nevezett \textit{hash}-eket állítanak elő. Egyes esetekben a grafikus kártyák ennél a folyamatnál akár 800x is gyorsabbak lehetnek mint az azonos számításokat végző, egy CPU-t (\textit{Central Processing Unit}) használó változat \cite{crypto}. Az előbbiek alapján jogosan merül fel a kérdés, hogyan lehet SQL lekérdezéseket megvalósítani GPU (\textit{Graphics Processing Unit}) segítségével, illetve milyen előnyökkel és hátrányokkal járhat ez a megoldás.
 
-Tehát jogosan merül fel a kérdés, hogyan lehet SQL lekérdezéseket megvalósítani GPU (\textit{Graphics Processing Unit}) -n, illetve milyen előnyökkel és hátrányokkal járhat ez a megoldás.
-
-
+A dolgozat a MySQL adatbázismotor esetében mutatja be az optimalizálás lehetőségeit, az SQL lekérdezések végrehajtásának elemzési módjait. Áttekintés szintjén kitér az OpenCL nyelvre, majd egy saját fejlesztésű, a MySQL-hez már egyébként rendelkezésre álló \textit{driver} programra épülő hatékonyabb elérési módot biztosító szoftvert mutat be. A dolgozatban a számítási teljesítmény vizsgálatához számos mérés és annak eredményei is részletezésre kerülnek.
 
 
 

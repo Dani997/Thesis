@@ -1,30 +1,30 @@
 \Chapter{SQL lekérdezések végrehajtása}
 
-\Section{Execution Plan}
+A fejezet áttekinti és példákon keresztül bemutatja, hogy a lekérdezések végrehajtási módját hogyan lehet elemezni, azt így nyert információkat felhasználni a lekérdezés hatékonyabbá tételének érdekében.
 
-A lekérdezés végrehajtási terv elkészítésével információkat nyerhetünk a lekérdezések hatékonyságáról. Ennek segítségével optimalizálhatjuk például egy olyan weboldal működését, mely sok és/vagy bonyolult lekérdezést végez adatbázisból. A hatékonyságot általában indexek hozzáadásával vagy elvételével illetve a táblák kapcsolási sorrendjének módosításával vagy kapcsolási módjának megváltoztatásával segíthetjük elő.
+A lekérdezés \textit{végrehajtási terv} (\textit{Execution Plan}) elkészítésével információkat nyerhetünk a lekérdezések hatékonyságáról. Ennek segítségével optimalizálhatjuk például egy olyan weboldal működését, mely sok és/vagy bonyolult lekérdezést végez adatbázisból. A hatékonyságot általában indexek hozzáadásával vagy elvételével illetve a táblák kapcsolási sorrendjének módosításával vagy kapcsolási módjának megváltoztatásával segíthetjük elő.
 
-\SubSection{Az \texttt{EXPLAIN} parancs}
+\Section{Az \texttt{EXPLAIN} parancs}
 
-\texttt{MySQL} adatbázis kezelő használatakor az Executing Plan -hez szükséges információkat az \texttt{EXPLAIN} parancs segítségével kaphatjuk meg.
+\texttt{MySQL} adatbázis kezelő használatakor az Executing Plan-hez szükséges információkat az \texttt{EXPLAIN} parancs segítségével kaphatjuk meg.
 Az utasítás megfelelő kifejezéssel együtt használva (\texttt{SELECT}, \texttt{DELETE}, \texttt{INSERT}, \texttt{REPLACE}, \texttt{UPDATE})  információkat jelenít meg az optimalizáló által előállított feldolgozási tervről. Láthatóvá válik például a táblák összekapcsolási sorrendje és a használt index neve.
 
 További információk érhetők el a \texttt{SHOW WARNINGS} használatával.
-A \texttt{FORMAT} parancs használható kimeneti formátum választásra. A \texttt{TRADITIONAL} az alapértelmezett táblázatos alak, illetve másik a \texttt{JSON} ami elnevezésének megfelelő formátumban jelenti meg a kimenetet.
+A \texttt{FORMAT} parancs használható kimeneti formátum választásra. A \texttt{TRADITIONAL} az alapértelmezett táblázatos alak, továbbá a \texttt{JSON} ami elnevezésének megfelelő formátumban jelenti meg a kimenetet. A formátumokról egy rövid áttekintést láthatunk \aref{tab:explain}. táblázatban.
 
 A parancs használata rávilágít arra, hogy hol van szükség indexek használatára a lekérdezés gyorsításához, illetve ellenőrizhetjük, hogy a táblák megfelelő sorrendben vannak -e összekapcsolva. 
 
-\texttt{JOIN} helyett \texttt{STRAIGHT\_JOIN} használatával tippek adhatók az optimalizálónak a táblák kapcsolási sorrendjéről. De a \texttt{STRAIGHT\_JOIN} letiltja a \texttt{semijoin} transzformációkat, így indexelés ebben az esetben nem használható.
+\texttt{JOIN} helyett \texttt{STRAIGHT\_JOIN} használatával tippek adhatók az optimalizálás elvégzéséhez a táblák kapcsolási sorrendjéről. Érdemes azonban figyelembe venni, hogy a \texttt{STRAIGHT\_JOIN} letiltja a \texttt{semijoin} transzformációkat, így indexelés ebben az esetben nem használható.
 
-\texttt{ANALYZE TABLE} utasítással frissíthetőek a statisztikák, mint a kulcsok számossága. Ez befolyásolhatja az optimalizáló döntéseit. \cite{explain}
+\texttt{ANALYZE TABLE} utasítással frissíthetőek a statisztikák, mint a kulcsok számossága. Ez befolyásolhatja az optimalizáló döntéseit \cite{explain}.
 
 % TODO: Ide érdemes kifejteni, MySQL Workbench-es példákkal illusztrálni, hogy hogyan működik a parancs.
 
 \begin{table}[h!]
 \centering
 \caption{\texttt{EXPLAIN} kimeneti oszlopai}
+\label{tab:explain}
 \medskip
-\label{tab:cpuvsgpu}
 \begin{tabular}{|p{3cm}|p{3cm}|p{8cm}|}
 \hline
 oszlop & \texttt{JSON} elnevezés & Jelentése \\
@@ -57,38 +57,47 @@ filtered & filtered & a szűrt sorok százaléka a tábla állapota szerint \\
 \Section{Teszt adatbázis megtervezése}
 
 Az execution plan optimalizálási módnál a kapott információk felhasználásával tudjuk optimalizálni a lekérdezéseket.
-Olyan adatbázist kell választanunk ennek kipróbáláshoz amelyben használhatók indexek de nincs feltétlen szükség rájuk, össze kapcsolhatunk több táblát és rendezhetjük az adatokat például növekvő sorrendben. A felhasználási mód miatt kevés dologra kell ügyelnünk a tábláknál, ilyen például a NotNull. A táblák minden eleme INT típusú, és csak a feltöltött adatok értékének intervalluma tér el. Az elsődleges kulcs minden esetben 0 -tól N-1 ig tart.
+Olyan adatbázist kell választanunk ennek kipróbálásához, amelyben használhatók indexek de nincs feltétlen szükség rájuk, össze kapcsolhatunk több táblát és rendezhetjük az adatokat, például növekvő sorrendbe. A felhasználási mód miatt kevés dologra kell ügyelnünk a tábláknál, ilyen például a \texttt{NOT NULL} megkötés. A táblák minden eleme \texttt{INT} típusú, és csak a feltöltött adatok értékének intervalluma tér el. Az elsődleges kulcs minden esetben 0-tól $(N-1)$-ig tart.
 
+A táblákat \texttt{T} betűvel és sorszámmal jelöltem. A táblák oszlopait \texttt{c}-vel (mint \textit{column}) sorszámozott formában adtam meg. Ezek közül a \texttt{c1} az elsődleges kulcsot jelöli. A további oszlopok esetében az értékek különböző intervallumokon változtak, és véletlenszerű értékekkel töltöttem ki. Ezek áttekintését láthatjuk a következőkben.
 
-T1 -es tábla:
+\bigskip
+
+\noindent \texttt{T1}-es tábla:
 \begin{itemize}
 \item 100 elemet tartalmaz.
-\item c2    random érték [1:2] intervallumon.
+\item c2    [1:2]
 \item c3    [1:100]
 \item c4    [1:10000]
 \end{itemize}
-T2 -es tábla:
+
+\noindent \texttt{T2}-es tábla:
 \begin{itemize}
 \item 1000 elemet tartalmaz.
 \item c2    [1:100]
 \item c3    [1:10000]
 \end{itemize}
-Létrehozás során ügyeltem arra, hogy minden T1.c1p1 kulcshoz tartozzon legalább egy idegen kulcs ebben a táblában.
 
-T3 -as tábla:
+Létrehozás során ügyeltem arra, hogy minden \texttt{T1.c1p1} kulcshoz tartozzon legalább egy idegen kulcs ebben a táblában.
+
+\bigskip
+
+\noindent \texttt{T3}-as tábla:
 \begin{itemize}   
-\item 50.000 elemet tartalmaz
+\item 50.000 elemet tartalmaz.
 \item c2    [1:100]
 \item c3    [1:10000]
 \item c4    [1:10]
 \end{itemize}
-Az idegen kulcsok véletlenszerűen kapcsolódnak a T1 -es és T2 -es táblához.
+Az idegen kulcsok véletlenszerűen kapcsolódnak a \texttt{T1}-es és \texttt{T2}-es táblához.
+
+Az így összeállított mintaadatbázis sémáját láthatjuk \aref{fig:new_schema}. ábrán.
 
 \begin{figure}[h!]
 \centering
 \includegraphics[width=10cm]{images/new_schema.png}
 \caption{Adatbázis séma}
-\label{fig:schema}
+\label{fig:new_schema}
 \end{figure}
 
 %Az oszlopnevek számozottak. A \texttt{c3}-\texttt{c5} Az értékeik véletlenszerűen generált egészek, \texttt{c3} $in [0, 100]$, \texttt{c4} $in [0, 10000]$, \texttt{c5} $in [0, 10]$.
@@ -96,66 +105,70 @@ Az idegen kulcsok véletlenszerűen kapcsolódnak a T1 -es és T2 -es táblához
 
 \SubSection{A táblák feltöltése}
 
-Az adatokat egy \texttt{C++} kóddal generáltam \texttt{.csv} formátumba, ügyelve a kapcsolásokra. Majd ezeket a táblákat \texttt{MySQLWorkbench} segítségével importáltam.A \texttt{.csv} állományok mintája:
+Az adatokat egy \texttt{C++} kóddal generáltam \texttt{.csv} formátumban, ügyelve a kapcsolásokra. Ezeket a táblákat \texttt{MySQLWorkbench} segítségével importáltam.
+Egy \texttt{.csv} állomány részlete például az alábbi:
 \begin{python}
 c1p1, c2, c3, c4
 0, 1, 25, 9707
 1, 1, 10, 6539
 \end{python}
+
 \newpage
+
 \Section{\texttt{EXPLAIN} a gyakorlatban}
 
-A \texttt{MySQL Workbench} grafikus képeit fogom használni melyeket újraalkottam minőségük miatt. Ez a módszer sokkal jobban szemlélteti miképpen dolgozza fel az utasításokat az adatbázis kezelő motorja.
+A \textit{MySQL Workbench} grafikus képeit fogom használni (melyeket átszerkesztettem a jobb minőség érdekében). Ez a módszer sokkal jobban szemlélteti miképpen dolgozza fel az utasításokat az adatbáziskezelő motorja.
 
 \SubSection{Egyszerű lekérdezés}
+
 Vizsgáljuk a következő lekérdezést:
 \begin{python}
-SELECT * from thesis.T1 WHERE c3=25; 
+SELECT * FROM thesis.T1 WHERE c3 = 25; 
 \end{python}
 \begin{figure}[h!]
 \centering
 \includegraphics[width=3.5cm]{images/explain/1-1.png}
 \caption{Indexelés nélküli lekérdezés}
-\label{fig:schema}
+\label{fig:explain_1_1}
 \end{figure}
 
-A program által előállított végrehajtási terven látható, hogy a \texttt{T1} -es tábla összes sorát át kell vizsgálni a megfelelő értékek megtalálásához. Erre nyújthat megoldást a vizsgált oszlop indexelése, melynek segítségével optimális sebességgel lehet meghatározni az értékek helyét.
+A program által előállított végrehajtási terven látható (\ref{fig:explain_1_1}. ábra), hogy a \texttt{T1} -es tábla összes sorát át kell vizsgálni a megfelelő értékek megtalálásához. Erre nyújthat megoldást a vizsgált oszlop indexelése, melynek segítségével optimális sebességgel lehet meghatározni az értékek helyét.
 
 Indexek hozzáadása a \texttt{c3} -as oszlophoz:
 \begin{python} 
-ALTER TABLE  thesis.T1  ADD INDEX (c3);
+ALTER TABLE thesis.T1 ADD INDEX (c3);
 \end{python}
 
 \begin{figure}[h!]
 \centering
 \includegraphics[width=4.2cm]{images/explain/1-2.png}
 \caption{Indexelés nélküli lekérdezés}
-\label{fig:schema}
+\label{fig:explain_1_2}
 \end{figure}
-Újra lefuttatva az előző lekérdezést láthatjuk, hogy a költsége a töredékére csökkent, melynek az az oka, hogy nem kell minden cella értékét megvizsgálni.
+Újra lefuttatva az előző lekérdezést \aref{fig:explain_1_2}. ábrán láthatjuk, hogy a költsége a töredékére csökkent, melynek az az oka, hogy nem kell minden cella értékét megvizsgálni.
 
-
-Parancs az indexek eltávolításához:
+A teljesség kedvéért érdemes megemlíteni, hogy a létrehozott indexet az alábbi paranccsal tudjuk eltávolítani.
 \begin{python} 
-ALTER TABLE  thesis.T1  DROP INDEX c3;
+ALTER TABLE thesis.T1 DROP INDEX c3;
 \end{python}
 
 \newpage
+
 \SubSection{Csoportosítás}
 
-Nézzük meg egy kicsit összetettebb lekérdezést.
+Nézzünk meg egy kicsit összetettebb lekérdezést, amelyben már csoportosítás is szerepel.
 \begin{python} 
-SELECT MAX(c4), c3, c2 FROM thesis.T1 WHERE T1.c3=18 GROUP BY c2;
+SELECT MAX(c4), c3, c2 FROM thesis.T1 WHERE T1.c3 = 18 GROUP BY c2;
 \end{python}
 
 \begin{figure}[h!]
 \centering
 \includegraphics[width=3.5cm]{images/explain/2-1.png}
 \caption{Csoportosítás indexelés nélkül}
-\label{fig:schema}
+\label{fig:explain_2_1}
 \end{figure}
 
-A lekérdezés elemzésénél két problémát fedezhetünk fel. Az egyik, hogy a teljes tábla átvizsgálásra kerül, a másik pedig egy ideiglenes tábla létrejötte ami a lekérdezés idejére memóriát foglal.
+A lekérdezés elemzésénél két problémát fedezhetünk fel (\ref{fig:ig:explain_2_1}. ábra). Az egyik, hogy a teljes tábla átvizsgálásra kerül, a másik pedig egy ideiglenes tábla létrejötte, ami a lekérdezés idejére memóriát foglal.
 
 \begin{figure}[h!]
 \centering
@@ -165,17 +178,17 @@ A lekérdezés elemzésénél két problémát fedezhetünk fel. Az egyik, hogy 
 \hspace{1cm} 
 \includegraphics[width=4.2cm]{images/explain/covered.png}
 \caption{Indexelések változatai.}
-\label{fig:schema}
+\label{fig:covered}
 \end{figure}
 
-Nézzük a következő négy indexelést:
+Nézzük a következő négy indexelést (\ref{fig:covered}. ábra):
 \begin{itemize} 
-\item A \texttt{c3} -as oszlop indexelésével az első példához hasonlóan lecsökkent a szűrés költsége.
-\item A \texttt{c2} -es oszlop indexelésével az ideiglenes tábla nem jön létre lekérdezés közben.
-\item \texttt{c2} és \texttt{c3} -as külön indexelése esetén ugyan az történik mint \texttt{c3} indexelésekor.
-\item \texttt{c2} és \texttt{c3} közös indexelésével egyesíthetjük és két előnyt és így a lekérdezés optimális sebességű és memória igényű lesz.
+\item A \texttt{c3}-as oszlop indexelésével az első példához hasonlóan lecsökkent a szűrés költsége.
+\item A \texttt{c2}-es oszlop indexelésével az ideiglenes tábla nem jön létre lekérdezés közben.
+\item \texttt{c2} és \texttt{c3}-as külön indexelése esetén ugyan az történik mint \texttt{c3} indexelésekor.
+\item \texttt{c2} és \texttt{c3} közös indexelésével egyesíthetjük a két előnyt, és így a lekérdezés optimális sebességű és memória igényű lesz.
 \end{itemize} 
-Kevert index létrehozása és törlése:
+Kevert index létrehozása és törlése az alábbi SQL lekérdezésekkel valósítható meg:
 \begin{python}
 ALTER TABLE T1 ADD INDEX covered (c3,c2);
 ALTER TABLE thesis.T1 DROP INDEX covered;
@@ -185,40 +198,45 @@ ALTER TABLE thesis.T1 DROP INDEX covered;
 
 Ez a lekérdezés már összetettebb, annak érdekében, hogy látszódjon a lekérdezés optimalizáló mely esetekben milyen sorrendben kapcsolja össze a táblákat.
 \begin{python}
-SELECT T1.c3, T2.c2, T3.c3 FROM T3 JOIN T2 JOIN T1 
-	ON (T1.c1p1 = T2.fk_p1_p2 AND T2.c1p2 = T3.fk_p2_p3) 
-	WHERE  T3.c4=5 AND T1.c2 = 1 ;
+SELECT T1.c3, T2.c2, T3.c3
+FROM T3 JOIN T2 JOIN T1 
+    ON (T1.c1p1 = T2.fk_p1_p2 AND T2.c1p2 = T3.fk_p2_p3) 
+WHERE T3.c4 = 5 AND T1.c2 = 1;
 \end{python}
 
 \begin{figure}[h!]
 \centering
 \includegraphics[width=14cm]{images/explain/3-1.png}
 \caption{JOIN indexelés nélkül}
-\label{fig:schema}
+\label{fig:explain_3_1}
 \end{figure}
 
-Az első észrevétel, hogy a táblák kapcsolási sorrendje nem egyezik a lekérdezésben szereplő sorrenddel, tehát egyszerű \texttt{JOIN} esetében ezzel nem kell törődni. Láthatjuk, hogy a teljes tábla átvizsgálása itt is problémát jelent. 
+Az első észrevétel, hogy a táblák kapcsolási sorrendje nem egyezik a lekérdezésben szereplő sorrenddel, tehát egyszerű \texttt{JOIN} esetében ezzel nem kell törődni. Láthatjuk, hogy a teljes tábla átvizsgálása itt is problémát jelent (\ref{fig:explain_3_1}. ábra). 
 
-Miután \texttt{T3} -as tábla vizsgált oszlopát indexeléssel láttam el, szinte ugyan ezt az eredményt kaptam, leszámítva két értéket. \texttt{T3} -nál a költség 1190.96 -ról 1198.86 -ra nőtt illetve a 2. \texttt{nested loop} -nál a sorok száma 450 re csökkent.
+Miután a \texttt{T3}-as tábla vizsgált oszlopát indexeléssel láttam el, szinte ugyan ezt az eredményt kaptam, leszámítva két értéket. \texttt{T3}-nál a költség 1190.96-ról 1198.86-ra nőtt, illetve a 2. \texttt{nested loop}-nál a sorok száma 450 re csökkent.
 
 \newpage
+
 A következő vizsgálatban csak \texttt{T1} \texttt{c2} -es oszlopa indexelt.
 
 \begin{figure}[h!]
 \centering
 \includegraphics[width=14cm]{images/explain/3-2.png}
 \caption{JOIN T1.c2 és T3.c4 indexelésével}
-\label{fig:schema}
+\label{fig:explain_3_2}
 \end{figure}
-Az eredményből az látszik, hogy megváltozott a táblák kapcsolási sorrendje. A terv szerint a motor első lépésben szűri a \texttt{T3} -as táblát és csak utána kapcsolja hozzá a többit. A másik dolog amit meg lehet figyelni, hogy nem az idegen kulcs szerepel a használt indexnél, hanem az elsődleges, ez a sorrend változás következménye.
+
+Az eredményből az látszik, hogy megváltozott a táblák kapcsolási sorrendje (\ref{fig:explain_3_2}. ábra). A terv szerint a motor első lépésben szűri a \texttt{T3}-as táblát és csak utána kapcsolja hozzá a többit. A másik dolog amit meg lehet figyelni, hogy nem az idegen kulcs szerepel a használt indexnél, hanem az elsődleges, ez a sorrend változás következménye.
 
 A negyedik vizsgálatban mind a két tábla használt oszlopát indexekkel láttam el.
+
 \begin{figure}[h!]
 \centering
 \includegraphics[width=14cm]{images/explain/3-3.png}
 \caption{JOIN T1.c2 indexelésével}
-\label{fig:schema}
+\label{fig:explain_3_3}
 \end{figure}
-Ezen az ábrán azt vehetjük észre, hogy a \texttt{T3} -as táblánál is használatban vannak az indexek, így már sebesség optimális a lekérdezés.
+
+\Aref{fig:explain_3_3}. ábrán azt vehetjük észre, hogy a \texttt{T3}-as táblánál is használatban vannak az indexek, így már sebesség optimális a lekérdezés.
 
 Az ábrákon látható \texttt{query cost} megtévesztő lehet, hisz arra enged következtetni, hogy nem érdemes indexelést használni ebben az esetben, viszont a lekérdezés sebességének vizsgálata egyértelműen mutatja, hogy az indexek használata jelentős sebesség növekedéssel járt. 

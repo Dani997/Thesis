@@ -2,12 +2,16 @@
 
 % TODO: Indexelés kifejtése
 
+A fejlettebb adatbázismotorok esetében közvetlenül elérhetőek beépített paraméterek és eszközök a számítási teljesítmény és a tárolási mód optimalizálásához. A következőkben az indexeléssel kapcsolatos lehetőségeket, majd a MySQL specifikus beállításait részletezi a fejezet.
+
 \Section{Indexelés}
 %https://www.sqlshack.com/query-optimization-techniques-in-sql-server-the-basics/
-Egy táblázat adataihoz kétféleképpen lehet hozzáférni, úgynevezett szkenneléssel illetve kereséssel. A keresés nem más, mint mikor valamilyen szűrő feltétel alapján választunk ki rekordokat. Ezek a szűrőfeltételek általában keskeny szűrők, azaz sok adatból kevés értékre igazak. A szkennelés, mikor egy teljes indexet keresünk a megfelelő értékek visszaadásához. Egy tábla akár több millió sorból is állhat, kereséskor ennek minden sorát át kell vizsgálni. Ugyan ezen a táblán sokkal gyorsabban is át lehet haladni ha az indexek bináris fáját vizsgáljuk, ilyenkor anélkül adható vissza az végeredmény, hogy minden rekordot át kellene vizsgálni.
-Néhány felmerülő gondolat amit optimalizáláskor figyelni kell: \cite{index}
+
+Az adatbázis egy táblájának adataihoz kétféleképpen lehet hozzáférni: úgynevezett szkenneléssel illetve kereséssel. A keresés nem más, mint mikor valamilyen szűrő feltétel alapján választunk ki rekordokat. Ezek a szűrőfeltételek általában keskeny szűrők, azaz sok adatból kevés értékre igazak. A szkennelés, mikor egy teljes indexet keresünk a megfelelő értékek visszaadásához. Egy tábla akár több millió sorból is állhat, kereséskor ennek minden sorát át kell vizsgálni. Ugyan ezen a táblán sokkal gyorsabban is át lehet haladni ha az indexek bináris fáját vizsgáljuk, ilyenkor anélkül adható vissza a végeredmény, hogy minden rekordot át kellene vizsgálni.
+
+Néhány felmerülő szempontot láthatunk a következő pontokban, amelyre optimalizáláskor figyelni kell \cite{manolopoulos2012advanced}.
 \begin{itemize}
-\item Van -e olyan index amely használható a lekérdezéskor?
+\item Van-e olyan index amely használható a lekérdezéskor?
 \item Ha nincs indexelés, akkor hozzunk létre?
 \item Elég gyakori az adott lekérdezés ahhoz, hogy ez megérje?
 \begin{itemize}
@@ -18,27 +22,24 @@ Néhány felmerülő gondolat amit optimalizáláskor figyelni kell: \cite{index
 \item Elkerülhető a vizsgálat a lekérdezésnél? Néhány lekérdezés szinte mindent magába foglal, ezért teljes táblavizsgálatot igényel.
 \end{itemize}
 
-
-
 % TODO: Séma normalizálás/denormalizálás
 
 %https://docs.microsoft.com/en-us/office/troubleshoot/access/database-normalization-description
 
-\Section{Normalizálás és denormalizálás}
+\Section{Normalizálás}
 
-\SubSection{Normalizálás}
-A normalizálás az adatok adatbázisba szervezésének folyamata. Ez magába foglalja a táblák létrehozását és az azok közötti kapcsolatok kialakítását. Mindezt olyan szabályok szerint melyek segítenek az adatok védelmében, az adatbázis rugalmassá tételében, a redundancia elkerülésében és a következetlen függőségek kiküszöbölésében.
+A normalizálás az adatok adatbázisba szervezésének folyamata. Ez magába foglalja a táblák létrehozását és az azok közötti kapcsolatok kialakítását. Mindezt olyan szabályok szerint, melyek segítenek az adatok védelmében, az adatbázis rugalmassá tételében, a redundancia elkerülésében és a következetlen függőségek kiküszöbölésében.
 
-A redundancia pazarolja a lemezterületet és karbantartási problémákat okoz. Egyazon adat több helyen való tárolása igényli, hogy mindenhol ugyan úgy módosuljon az adat, különben anomáliák jönnek létre.
+A redundancia pazarolja a lemezterületet és karbantartási problémákat okoz. Egyazon adat több helyen való tárolása igényli, hogy mindenhol ugyan úgy módosuljon, különben anomáliák jönnek létre.
 
 A következetlen függőség a táblák nem megfelelően felépítéséből adódik. Bizonyos adatelemek ha nem megfelelő táblába kerülnek, akkor nehezítik annak elérését, illetve teljesen megszakadhat az adatok megtalálásának útja.
 
-Ezek kiküszöbölésére léteznek szabályok, melyeket normál formáknak nevezünk. Ha egy séma teljesíti az első normál forma előírásait, akkor azt mondjak első normálformában van. A harmadik normálforma tekinthető a legtöbb alkalmazáshoz szükséges legmagasabb szintnek, bár öt van. \cite{normaliz}
+Ezek kiküszöbölésére léteznek szabályok, melyeket normál formáknak nevezünk. Ha egy séma teljesíti az első normál forma előírásait, akkor azt mondjuk, hogy első normálformában van. A harmadik normálforma tekinthető a legtöbb alkalmazáshoz szükséges legmagasabb szintnek, bár összesen öt van \cite{normaliz}.
 
-\SubSection{Denormalizálás}
+\Section{Denormalizálás}
 %https://web.archive.org/web/20171201030308/https://pdfs.semanticscholar.org/2c79/069c01ba8d598f32e61fe367ef6d261a0cb4.pdf
 Általános vélekedés, hogy a normalizáció rontja a válaszidőt. A teljes normalizálás logikailag különálló entitásokat eredményez, melyek fizikailag is különállóan vannak eltárolva. Ennek hatása lehet, hogy a feldolgozás több erőforrást igényel.
-A denormalizálás célja az olvasási sebesség javítása azzal, hogy szándékosan idéznek elő redundanciát vagy csoportosítanak adatokat. \cite{denormaliz}
+A denormalizálás célja az olvasási sebesség javítása azzal, hogy szándékosan idéznek elő redundanciát vagy csoportosítanak adatokat \cite{denormaliz}.
 \begin{itemize}
 \item A folyamat magas szakértelmet igényel.
 \item Figyelembe kell venni az adatbázis logikai és fizikai felépítését is.
@@ -46,17 +47,15 @@ A denormalizálás célja az olvasási sebesség javítása azzal, hogy szándé
 \item Főként sok lekérdezés, és kevés frissítés esetén érdemes alkalmazni.
 \end{itemize}
 
-
-
 % TODO: Egyéb paraméterek, beállításaik
 
-\SubSection{Egyéb optimalizálási paraméterek}
+\Section{Egyéb optimalizálási paraméterek}
 
-Az adatbázis sebességét nem csak annak megfelelő kialakításával segíthetjük elő, hanem a megfelelő adatbázis kezelő kiválasztásával és annak helyes konfigurálásával is.
-Jelen esetben a \texttt{MySQL}-t használjuk, melyhez több motor is elérhető. Alapértelmezett módon ez az \texttt{InnoDB}, de ezen kívül elérhető a \texttt{MyISAM}-is. Utóbbinak hátránya, hogy nem támogatja a sor szintű zárolást, idegen kulcsokat és tranzakciókat. A \texttt{MyISAM} ezek miatt viszonylag ritkán jobb döntés. Íme pár fontosabb konfigurációs beállítás: \cite{other_optimization}
+Az adatbázis sebességét nem csak annak megfelelő kialakításával segíthetjük elő, hanem a megfelelő adatbázis kezelő kiválasztásával és annak helyes konfigurálásával.
+Jelen esetben a \texttt{MySQL}-t használjuk, melyhez több motor is elérhető. Alapértelmezett módon ez az \texttt{InnoDB}, de ezen kívül elérhető a \texttt{MyISAM}-is. Utóbbinak hátránya, hogy nem támogatja a sor szintű zárolást, idegen kulcsokat és tranzakciókat. A \texttt{MyISAM} választása emiatt viszonylag ritkán tekinthető jobb döntésnek. Íme néhány fontosabb konfigurációs beállítás, amellyel javíthatjuk az adatbázisunk teljesítményét \cite{other_optimization}.
 \begin{itemize}
 \item \texttt{innodb buffer pool size}: A motor gyorsítótárának mérete. Elérheti a szerver memória 80-90\% -át is ha ez szükséges.
 \item \texttt{innodb io capacity}: Megadja a \texttt{MySQL}-nek, hogy hány I/O műveletet végezhet. Ezzel háttértárnak megfelelő korlát adható, így nem fog a szerver  egyszerre túl sok ilyen műveletet végezni.
 \item \texttt{query cache limit} és \texttt{query cache size}: Túl nagy terhelés esetén a gyorsítótár használhatatlan, ilyenkor érdemes kikapcsolni, hogy megspóroljuk annak kezelési költségét.
-\item \texttt{slow query log, long query time}: Megmutatja mely lekérdezések lassabbak a megadott időnél. Erről .log fájl készül amely megmutatja, hány sort érint a lekérdezés, mikor és ki hajtotta végre.
+\item \texttt{slow query log}, \texttt{long query time}: Megmutatja mely lekérdezések lassabbak a megadott időnél. Erről naplófájl készül (\texttt{.log} kiterjesztéssel) amely megmutatja, hány sort érint a lekérdezés, mikor és ki hajtotta végre.
 \end{itemize}

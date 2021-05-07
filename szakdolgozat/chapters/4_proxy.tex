@@ -1,12 +1,14 @@
 \Chapter{Saját kód elhelyezése}
 
+Az adatbázis lekérdezések optimalizálása kapcsán felvetődik a kérdés, hogy az optimalizálást pontosan hol lehet és hol érdemes elvégezni. A fejezet ennek a lehetőségeit vizsgálja meg a közvetlenül az adatbázis forráskódjában való elhelyezéssel és egy saját \textit{Connector Proxy} bemutatásával.
+
 \Section{A MySQL adatbázis fordítása és telepítése}
 
-A MySQL forráskódból való fordítását egy frissen telepített és naprakészre frissített Manjaro 20.2.1 es linux disztribúción végeztem el. Telepítés során non-free grafikus drivert választottam.
+A MySQL forráskódból való fordítását egy frissen telepített és naprakészre frissített Manjaro 20.2.1-es GNU/Linux disztribúción végeztem el. Telepítés során \textit{non-free} grafikus drivert választottam.
 A forrásállomány bárki számára elérhető, és a következő paranccsal klónozható:
 \begin{python}
- git clone https://github.com/mysql/mysql-server.git
-\end{python}
+$ git clone https://github.com/mysql/mysql-server.git
+\end{python}%$
 A fordítás sikerességéhez rendszerenként eltérő csomagok telepítésére lehet szükség. Jelen esetben a következők telepítéseket igényelte a folyamat.
 % QUEST: Miért snap-es csomaggal lett telepítve?
 % ANSWER: A cmake telepítése a gyártó hivatalos weboldalán található Manjato rendszerhez készült segédlet alapján lett elvégezve.
@@ -19,118 +21,116 @@ A fordítás sikerességéhez rendszerenként eltérő csomagok telepítésére 
  $ sudo pacman -S bison
 \end{python}%$
 %A \textit{Boost} függvénykönyvtár később kapcsoló használatával letölthető.
-A következő lépés a CMake futtatása. Ehhez célszerű létrehozni egy mappát ahová az új állományok létrejöhetnek. Ezt nem kötelező megtenni, a forrás könyvtárban is ki lehet adni a parancsot, ehhez a \texttt{CMake} megfogja adni a szükséges kapcsolót illetve figyelmeztet arra, hogy nem ajánlatos.
+A következő lépés a \texttt{CMake} futtatása. Ehhez célszerű létrehozni egy mappát ahová az új állományok létrejöhetnek. Ezt nem kötelező megtenni, a forrás könyvtárban is ki lehet adni a parancsot, ehhez a \texttt{CMake} megfogja adni a szükséges kapcsolót illetve figyelmeztet arra, hogy nem ajánlatos.
 \begin{python}
- mkdir build
-\end{python}
+$ mkdir build
+\end{python}%$
 Amint ez kész a forrás mappájában futtathatjuk a következő parancsot:
 \begin{python}
- cmake ./ ../build -DDOWNLOAD_BOOST=1 -DWITH_BOOST=../boost/
-\end{python}
-A megadott kapcsolóval a boost könyvtár letöltődik a megadott helyre és a \texttt{CMake} megjegyez ezt. Ha a generátor hibába ütközik a szükséges csomagokat telepíteni kell és a \textit{CMakeCache.txt} fájlt törtölni. Ezek után a \texttt{CMake} újra futtatható, de már a \textit{Boost} -hoz tartozó kapcsolók nélkül.
+$ cmake ./ ../build -DDOWNLOAD_BOOST=1 -DWITH_BOOST=../boost/
+\end{python}%$
+A megadott kapcsolóval a \textit{Boost} könyvtár letöltődik a megadott helyre, és a \texttt{CMake} regisztrálja ezt. Ha a generátor hibába ütközik a szükséges csomagokat telepíteni kell, és a \texttt{CMakeCache.txt} fájlt törtölni. Ezek után a \texttt{CMake} újra futtatható, de már a \textit{Boost}-hoz tartozó kapcsolók nélkül.
 
 A sikeres futás jelzi, hogy minden készen áll a fordításra, nincs hiányzó csomag.
 A \texttt{make} parancs futtatása következik. Ez egy hosszú folyamat, jelen konfiguráción 120 percet vett igénybe. 
 
 A sikeres fordítást követően létre kell hoznunk egy data mappát a szerver számára.
 \begin{python}
- mkdir data
-\end{python}
-Első futtatást rendszergazdaként a megadott kapcsolóval kell végrehajtani, csak ekkor tudja a szerver létrehozni a fájljait!
+$ mkdir data
+\end{python}%$
+Az első futtatást rendszergazdaként a megadott kapcsolóval kell végrehajtani, csak ekkor tudja a szerver létrehozni a fájljait.
 \begin{python}
- sudo ./bin/mysqld --initialize
-\end{python}
-Ekkor kapunk egy jelszót az a szerverre való csatlakozáshoz. Következő futtatás előtt szükség lehet a data mappa jogosultságainak állítására, különben a szerver a normál indítás során nem tudja inicializálni az InnoDB-t olvasási hiba miatt.
+$ sudo ./bin/mysqld --initialize
+\end{python}%$
+Ekkor kapunk egy jelszót a szerverre való csatlakozáshoz. Következő futtatás előtt szükség lehet a \texttt{data} mappa jogosultságainak állítására, különben a szerver a normál indítás során nem tudja inicializálni az \textit{InnoDB}-t olvasási hiba miatt.
 \begin{python}
- sudo chmod -R 777 ./data
-\end{python}
-Ezután futtathatjuk a szervert
-\texttt{./bin/mysqld}
-Vagy telepíthetjük is azt a \texttt{make install} paranccsal, de ez jelen esetben szükségtelen.
+$ sudo chmod -R 777 ./data
+\end{python}%$
+Ezután futtathatjuk a szervert a
+\texttt{./bin/mysqld} paranccsal, vagy telepíthetjük is azt a \texttt{make install} paranccsal.
 
-
-
-Csatlakozás a szerverre:
+A szerverre csatlakozni a következő paranccsal tudunk.
 \begin{python}
- ./bin/mysql -u root -p
-\end{python}
-A generált jelszó bemásolásával belépünk. Majd megváltoztatjuk a jelszót.
+$ ./bin/mysql -u root -p
+\end{python}%$
+A generált jelszó bemásolásával belépünk. Majd megváltoztatjuk azt.
 \begin{python}
 ALTER USER 'root'@'localhost' IDENTIFIED BY 'uj jelszo';
 \end{python}
-Vagy használhatjuk a MySQL Workbench-et ami első belépéskor megkér minket a módosításra.
+Használhatjuk a MySQL Workbench-et ami első belépéskor megkér minket a módosításra.
 % TODO: SQL-es környezetet lesz majd célszerű használni helyette!
-
 
 \Section{A MySQL Connector}
 
-A \texttt{Connector}, \texttt{MySQL} alapszabványú drivereket biztosít különböző nyelveken, amelyek lehetővé teszik a fejlesztők számára, hogy adatbázis alkalmazásokat írjanak a támogatott nyelveken. Ezen kívül egy natív \texttt{C} könyvtár teszi lehetővé azt, hogy a \texttt{MySQL} -t közvetlenül beágyazhassák alkalmazásaikba. \newline
-A következő \texttt{MySQL} által fejlesztett driverek érhetőek el: \newline
-\texttt{ADO.NET}, \texttt{ODBC}, \texttt{JDBC}, \texttt{Node.js}, \texttt{Python}, \texttt{C++}, \texttt{C} és \texttt{C API} a klienshez. \newline
-Az alábbiakat pedig a \texttt{MySQL} közössége fejleszti:\newline
-\texttt{PHP}, \texttt{Perl}, \texttt{Ruby}, \texttt{C+ Wrapper}. \cite{connector}
+A \texttt{Connector} \textit{MySQL} alapszabványú \textit{driver}-eket biztosít különböző nyelveken, amelyek lehetővé teszik a fejlesztők számára, hogy adatbázis alkalmazásokat írjanak a támogatott nyelveken \cite{connector}. Ezen kívül egy natív \textit{C} könyvtár teszi lehetővé azt, hogy a \textit{MySQL}-t közvetlenül beágyazhassák alkalmazásaikba.
+A következő \texttt{MySQL} által fejlesztett driverek érhetőek el:
+\begin{itemize}
+	\item \texttt{ADO.NET}, \texttt{ODBC}, \texttt{JDBC}, \texttt{Node.js}, \texttt{Python}, \texttt{C++}, \texttt{C} és \texttt{C API} a klienshez,
+\end{itemize}
+az alábbiakat pedig a \texttt{MySQL} közössége fejleszti:
+\begin{itemize}
+	\item \texttt{PHP}, \texttt{Perl}, \texttt{Ruby}, \texttt{C+ Wrapper}.
+\end{itemize}
 
 \SubSection{A Connector/C++ használata}
 
-Az állományok letölthetőek a készítő hivatalos weboldaláról:\newline
-https://dev.mysql.com/downloads/connector/cpp/
+Az állományok letölthetőek a készítő hivatalos weboldaláról (\url{https://dev.mysql.com/downloads/connector/cpp/}) a következő változatokban:
 \begin{itemize}
-	\item Linux - Generic
-	\item All
-	\item Linux - Generic (glibc 2.12) (x86, 64-bit), Compressed TAR Archive
+	\item Linux - Generic,
+	\item All,
+	\item Linux - Generic (glibc 2.12) (x86, 64-bit), Compressed TAR Archive.
 \end{itemize}
-Letöltés után kicsomagoljuk. A tartalma egy \texttt{include} és egy \texttt{lib64} mappa. Az \texttt{include} mappa tartalmát a \texttt{usr/include} könyvtárba másoljuk, a \texttt{lib64} -ét pedig az \texttt{usr/lib64} mappába.
+Ezt a letöltés után kicsomagoljuk. A tartalma egy \texttt{include} és egy \texttt{lib64} mappa. Az \texttt{include} mappa tartalmát a \texttt{usr/include} könyvtárba másoljuk, a \texttt{lib64}-ét pedig az \texttt{usr/lib64} mappába.
 
 Ezután szükség lesz egy külön felhasználóra amellyel a program csatlakozni fog a szerverünkre. Ezt létrehozhatjuk a \texttt{Workbench} alkalmazásban is.
 \begin{python}
-	CREATE USER 'newuser'@'localhost' IDENTIFIED BY 'password';
+CREATE USER 'newuser'@'localhost' IDENTIFIED BY 'password';
 \end{python}
 
 \SubSection{Első program}
 
-Kipróbálásra a legegyszerűbben a programok, mysql\_speed mappában lévő anyagokkal lehetséges.
+Kipróbálni például a dolgozathoz mellékelt \texttt{mysql\_speed} mappában lévő programmal lehetséges.
 
-Szükséges osztályok létrehozása:
+A \textit{Connector} használatához a következő osztályok létrehozása szükséges \cite{connector_program}:
 \begin{cpp}
-	sql::Driver *driver;
-	sql::Connection *con;
-	sql::Statement *stmt;
-	sql::ResultSet *res;
-	sql::PreparedStatement *pstmt;
+sql::Driver *driver;
+sql::Connection *con;
+sql::Statement *stmt;
+sql::ResultSet *res;
+sql::PreparedStatement *pstmt;
 \end{cpp}
-Csatlakozás a szerverhez és adatbázis kiválasztása:
+A szerverhez csatlakozni és az adatbázist kiválasztani a következő formában tudjuk.
 \begin{cpp}
-	driver = get_driver_instance();
-	con = driver->connect("tcp://192.168.0.43:3306", "program", "a");
-	con->setSchema("thesis");
+driver = get_driver_instance();
+con = driver->connect("tcp://192.168.0.43:3306", "program", "a");
+con->setSchema("thesis");
 \end{cpp}
 A következő két sor maga a lekérdezés. Az első utasítás elkészíti a szövegből a szerver számára is értelmezhető utasítást, a második sor pedig elküldi azt a szervernek és megvárja a választ:
 \begin{cpp}
-	pstmt = con->prepareStatement("SELECT * FROM T3");
-	res = pstmt->executeQuery();
+pstmt = con->prepareStatement("SELECT * FROM T3");
+res = pstmt->executeQuery();
 \end{cpp}
 
 Az eredményt a \texttt{res} objektumon végig lépkedve tudjuk kiolvasni, a lekért oszlop nevének megadásával és a típusnak megfelelő \texttt{get} függvénynél.
 \begin{cpp}
-	while (res->next())
-	cout << res->getInt("c1p3") << "\t" << res->getInt("c2") << "\t"
-	<< res->getInt("c3") << "\t" << res->getInt("c4") << "\t"
-	<< res->getInt("fk_p1_p3") << "\t" << res->getInt("fk_p2_p3") 
-	<< endl;
+while (res->next())
+cout << res->getInt("c1p3") << "\t" << res->getInt("c2") << "\t"
+<< res->getInt("c3") << "\t" << res->getInt("c4") << "\t"
+<< res->getInt("fk_p1_p3") << "\t" << res->getInt("fk_p2_p3") 
+<< endl;
 \end{cpp}
 Lekérdezés után fontos törölni az eredményhalmazt és az elkészített utasítást, ugyanis ezek memóriát foglalnak, és több lekérdezés esetén megtelhet akár a teljes memória is.
 \begin{cpp}
-	delete res;
-	delete pstmt;
+delete res;
+delete pstmt;
 \end{cpp}
 Futtatáshoz és fordításhoz a következő parancsokat használhatjuk: 
 \begin{python}
-	g++ -D_GLIBCXX_USE_CXX11_ABI=0 connectortest.cpp 
-	-o connectortest.out -lmysqlcppconn
-	
-	./connectortest.out
+$ g++ -D_GLIBCXX_USE_CXX11_ABI=0 connectortest.cpp 
+-o connectortest.out -lmysqlcppconn
+$ ./connectortest.out
 \end{python}
- \cite{connector_program}
+
 \Section{Connector proxy létrehozása}
 
 Azt feltételezhetjük, hogy a rendelkezésre álló MySQL elérési felületet érdemes megtartani valamilyen formában a lekérdezések optimalizálása során. Ez többek között az alábbiakkal indokolható.
