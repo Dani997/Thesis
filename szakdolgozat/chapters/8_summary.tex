@@ -1,10 +1,10 @@
 \Chapter{Összefoglalás}
 
-A dolgozatban sok érdekes információ kiderült a MySQL lekérdezések és az OpenCL-es megvalósítások hatékonyságával kapcsolatban.
+A dolgozatban sok érdekes információ kiderült a MySQL lekérdezések és az \texttt{OpenCL}-es megvalósítások hatékonyságával kapcsolatban.
 
-A MySQL Workbench által előállított grafikus végrehajtási terv hatékonyan nyújt segítséget a lekérdezéseink optimalizálásához. Használatával egyszerű módon találhatjuk adatbázisunk hiányosságait, legyen az a felépítéséből vagy akár csak egy indexelés hiányából adódó hátrány. Ez az eszköz bárki számára könnyedén elérhető és sok esetben nem igényel különleges szaktudást sem. Ideális esetben akár egy indexelés hozzáadásával is töredékére csökkenthetjük lekérdezéseink idejét.
+A \texttt{MySQL Workbench} által előállított grafikus végrehajtási terv hatékonyan nyújt segítséget a lekérdezéseink optimalizálásához. Használatával egyszerű módon találhatjuk adatbázisunk hiányosságait, legyen az a felépítéséből vagy akár csak egy indexelés hiányából adódó hátrány. Ez az eszköz bárki számára könnyedén elérhető és sok esetben nem igényel különleges szaktudást sem. Ideális esetben akár egy indexelés hozzáadásával is töredékére csökkenthetjük lekérdezéseink idejét.
 
-Áttérve a lekérdezések OpenCL-es megvalósítására, azt a következtetést vontam le, hogy vannak olyan esetek, amikor sebesség szempontjából jelentős előnyre lehet szert tenni, ha kihasználjuk a grafikus kártyák teljesítményét. De ahhoz, hogy ez a gyakorlatban is megvalósítható legyen nagyon sok előzetes vizsgálatra van szükség. A hatékonyság függ:
+Áttérve a lekérdezések \texttt{OpenCL}-es megvalósítására, azt a következtetést vontam le, hogy vannak olyan esetek, amikor sebesség szempontjából jelentős előnyre lehet szert tenni, ha kihasználjuk a grafikus kártyák teljesítményét. De ahhoz, hogy ez a gyakorlatban is megvalósítható legyen nagyon sok előzetes vizsgálatra van szükség. A hatékonyság függ:
 \begin{itemize}
 \item az adatbázis szerver sebességétől,
 \item a kliensgép erőforrásaitól,

@@ -1,6 +1,6 @@
 \Chapter{Az \texttt{OpenCL} nyelv}
 
-Az \textit{Open Computing Language} egy keretrendszer, amely lehetőséget ad olyan programok írására amelyek különböző platformokon is futtathatóak.
+Az \textit{Open Computing Language} egy keretrendszer, amely lehetőséget ad olyan programok írására, amelyek különböző platformokon is futtathatóak.
 Az \texttt{OpenCL} meghatároz egy programozási nyelvet az eszközök és API-k számára a platformok vezérléséhez és a számítások végrehajtásához az eszközökön. Szabványos interfészt biztosít a párhuzamos számításokhoz, melyekhez adatalapú és feladatalapú párhuzamosítást használ.
 
 Fontos észrevenni, hogy az \texttt{OpenCL} natív módon képes beszélni az eszközök nagy részével, de ez nem azt jelenti, hogy a kód optimálisan fog futni, ugyanis különböző \texttt{CL} eszközök különböző funkciókkal vannak ellátva (\ref{fig:opencl}. ábra). Gyártó specifikus kiterjesztések elkerülésével a kód hordozható lesz, de nem sebesség optimális.
@@ -14,15 +14,15 @@ Fontos észrevenni, hogy az \texttt{OpenCL} natív módon képes beszélni az es
 
 A következő esetekben a GPU-t érdemes használni:
 \begin{itemize}
-\item Gyors permutáció: Az eszközök gyorsabban mozgatáják a memóriát mint a Host.
+\item Gyors permutáció: Az eszközök gyorsabban mozgatják a memóriát, mint a Host.
 \item Adat átváltás: Átalakítás egyik formátumról másikra.
-\item Numerikus gyorsítás: Az eszközök gyorsabban számolnak nagyobb adatdarabokkal mint a Host.
+\item Numerikus gyorsítás: Az eszközök gyorsabban számolnak nagyobb adatdarabokkal, mint a Host.
 \end{itemize}
 A CPU és a GPU fontosabb jellemzőiről láthatunk egy összehasonlítást \aref{tab:cpuvsgpu}. táblázatban.
 
 Jelen esetben a Host egy asztali számítógép.
 Számítási eszközei: CPU, GPU, FPGA, DSP.
-A számítási egységek: a magok száma, az elemek feldolgozása ALU magonként történik.
+A számítási egységek: a magok száma, az elemek feldolgozása ALU (\textit{Arithmetic Logic Unit}) magonként történik.
 
 \texttt{OpenCL} használata mellett szükségtelen gondolkozni azon, hogy pontosan mi is végzi el a számításokat. Ugyanis az \texttt{OpenCL} modelljének illeszkedése egy adott hardverhez, a gyártók feladata.
 
@@ -63,7 +63,7 @@ Az újabb CPU-k több párhuzamosításra képesek & Újabb GPU-k
 \end{tabular}
 \end{table}
 
-Az OpenCL megkülönböztet eszköz és feldolgozási modelleket. A következőkben ezeket, továbbá a munkacsoportok létrehozását láthatjuk.
+Az \texttt{OpenCL} megkülönböztet eszköz és feldolgozási modelleket. A következőkben ezeket, továbbá a munkacsoportok létrehozását láthatjuk.
 
 \Section{Eszköz modell}
 
@@ -85,13 +85,13 @@ A konstans, lokális és privát memóriába nem lehet adatokat menteni úgy, ho
 
 \Section{Feldolgozási modell}
 
-A Host-on \texttt{OpenCL} alkalmazások futnak amelyek a számítási eszközökhöz küldik a munkát.
+A Host-on \texttt{OpenCL} alkalmazások futnak, amelyek a számítási eszközökhöz küldik a munkát.
 \begin{itemize}
 \item Munkaelem: A számítási eszköz alapvető egysége.
 \item Kernel: A kód, ami fut a munkaegységen  (Alap C függvények).
-\item Program: Kernelek és egyéb funkciók gyűjteménye
+\item Program: Kernelek és egyéb funkciók gyűjteménye.
 \item Kontextus: A környezet a munkaelemek végrehajtásához. (Eszközök, annak memóriái és parancssorai.)
-\item Parancssor: Sor melyet a Host arra használ, hogy a munkát (Kernelek, memória másolatok) az eszközbe küldje.
+\item Parancssor: Sor, melyet a Host arra használ, hogy a munkát (kernelek, memória másolatok) az eszközbe küldje.
 \end{itemize}
 
 Ez egy keretrendszer, amely meghatározza, hogy a kernel hogyan hajtsa végre a probléma egyes pontjait, vagy hogyan bontsa a feladatot munka elemekre.
@@ -107,24 +107,24 @@ Megfeleltetés:
 \begin{itemize}
 \item Munkaelem -- számítási elem: Minden munkaelemet egy számítási elem hajt végre.
 \item Munkacsoport -- számítási egység: Minden munkacsoportot egy számítási egység hajt végre. A munkacsoport munkaelemek, a számítási egység pedig számítási elemek csoportja.
-\item Kernel végrehajtási példány -- Számítási eszköz. Munkacsoportok összessége illetve számítási elemek összessége. 
+\item Kernel végrehajtási példány -- Számítási eszköz. Munkacsoportok összessége, illetve számítási elemek összessége. 
 \end{itemize}
 
 \Section{Munkacsoportok}
 
-Ideális esetben végtelen számú feldolgozási elemmel rendelkezik az eszköz, Minden ilyen elem az adatok egy részét kezeli anélkül, hogy szükségük lenne kommunikációra. De ez a gyakorlatban nem szokott ilyen egyszerű lenni, ezért a munkát fel kell osztani.
+Ideális esetben végtelen számú feldolgozási elemmel rendelkezik az eszköz. Minden ilyen elem az adatok egy részét kezeli anélkül, hogy szükségük lenne kommunikációra. Ez a gyakorlatban nem szokott ilyen egyszerű lenni, ezért a munkát fel kell osztani.
 \begin{itemize}
 \item A teljes munkát fel kell osztani kisebb darabokra.
 \item Minden darab egy munkacsoporthoz tartozik.
 \item A munkacsoportokat ütemezéssel kell végrehajtani a számítási egységeken.
-\item Minden csoport rendelkezik egy megosztott memóriával, ami olyan mint a lokális memória a számítási-egységeknél
+\item Minden csoport rendelkezik egy megosztott memóriával, ami olyan, mint a lokális memória a számítási-egységeknél
 \end{itemize}
 A folytatáshoz a munkacsoportokat ütemezni kell a végrehajtási egységeken, és a munkaelemeket számítási egységen belül végrehajtani.
 Minden munkaelem társulni fog egy számítási egységhez, ha van elegendő. Ezt a folyamatot az \textit{OpenCL} végzi, csak meg kell adni a globális munkaméretet és munkacsoport méretet. A kernelt indító függvény a  munkacsoportok számát kiszámolja. Ha nincs elég számítási egység, akkor a munkacsoportok sorban hajtódnak végre a meglévő egységeken.
 
 \Section{\texttt{OpenCL} program általános felépítése}
 
-Egy OpenCL program fejlesztése a következő lépésekből áll \cite{opencl}.
+Egy \texttt{OpenCL} program fejlesztése a következő lépésekből áll \cite{opencl}.
 \begin{itemize}
 \item Létre kell hozni egy szöveg típusú változót, ami tartalmazza a kernel kódot.
 \item Definiálni kell az eszközt, kontextust és parancssort.

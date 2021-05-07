@@ -4,10 +4,10 @@
 
 \Section{Adatok mozgatásának sebességei}
 
-Ebben a részben azt vizsgálom, hogy mennyi idő eljuttatni az adatokat a \textit{MySQL} szerverről a memóriába, azokat pufferekbe másolni, majd onnan az eredményeket visszaolvasni.
+Ebben a részben azt vizsgálom, hogy mennyi idő eljuttatni az adatokat a \texttt{MySQL} szerverről a memóriába, azokat pufferekbe másolni, majd onnan az eredményeket visszaolvasni.
 Annak érdekében, hogy a mérések pontosabbak legyenek, minden eredmény 5 futás átlagából került kiszámításra.
 
-\SubSection{A MySQL lekérdezés sebessége}
+\SubSection{A \texttt{MySQL} lekérdezés sebessége}
 
 A méréseket a programok között, a \texttt{sql\_speed} nevű mappában található kódokkal végeztem.
 
@@ -17,7 +17,7 @@ pstmt = con->prepareStatement(command);
 res = pstmt->executeQuery();
 \end{python}
 A  \texttt{res} és \texttt{pstmt} törlése időméréskor nagyon fontos, ugyanis ennek kihagyása miatt a memória megtelhet!
-\texttt{Command} egy \texttt{String} az \texttt{SQL} parancs és a következő módon áll össze:
+A \texttt{command} egy \texttt{string} az \texttt{SQL} parancs és a következő módon áll össze:
 \begin{python}
 range = 32768;
 while (i <= 1048576)
@@ -87,7 +87,7 @@ Az mérési módszer megegyezik az előzőekben használtakkal.
 \label{fig:ccopy}
 \end{figure}
 
-\Aref{fig:ccopy}. ábrán látható grafikonon két dolgot vehetünk észre azonnal. Az egyik az, hogy ez a folyamat lassabb mint maga a lekérdezés a másik pedig, hogy drasztikusabb a növekedés az oszlopok számának sokasodásával.
+\Aref{fig:ccopy}. ábrán látható grafikonon két dolgot vehetünk észre azonnal. Az egyik az, hogy ez a folyamat lassabb, mint maga a lekérdezés. A másik pedig, hogy drasztikusabb a növekedés az oszlopok számának sokasodásával.
 Tételezzük fel, csak úgy mint az előző esetben, hogy 4 oszlop felett nem több az elérés, mint 3 és 4 között.
 A két oszlop közötti eltérés lineáris becslése:
 $$-6,1 \cdot 10^{-4} \cdot x + 1,32, \quad R^2=0,99,$$ 
@@ -98,7 +98,7 @@ $$ 10019 \cdot x + 7692 = \text{másolás ideje}$$
 
 \SubSection{Adatok bemásolása a pufferekbe}
 
-Az adatok átmásolása az OpenCL puffereibe szintén egy olyan része a programnak, ami sok időt emészthet fel.
+Az adatok átmásolása az \texttt{OpenCL} puffereibe szintén egy olyan része a programnak, ami sok időt emészthet fel.
 (Az ehhez elkészített program neve \texttt{cp\_buffer}.)
 Vizsgáljuk meg a következő kódrészt.
 \begin{python}
@@ -126,7 +126,7 @@ while (range <= 1048576)
 Mivel ebben az esetben a másolás egybefüggő memória területre vonatkozik, nem pedig elemenkénti hivatkozás, ezért elegendő egyetlen mérés.
 \Aref{fig:pufferin}. grafikonon egy 4 oszlopos tábla átmásolásának a sebessége látható. Ebből több vagy kevesebb oszlopra, illetve sorra a becslés egyszerű szorzásokkal megkapható.
 
-4 és 3 oszlop esetén:
+3 és 4 oszlop esetén:
 $$ x = \text{sorok száma} / 65536, $$
 $$ 348 \cdot x + 452 = \text{pufferbe másolás ideje}, $$ 
 $$ \text{pufferbe másolás ideje} \cdot 0.75 = \text{3 oszlopos pufferbe másolás ideje}. $$
@@ -146,7 +146,7 @@ Az előzőhöz hasonlóan itt is egy memória darabot másolunk, ennek szorzás�
 	\label{fig:pufferout}
 \end{figure}
 
-Fontos megjegyezni, hogy a mérések egy, program futtatáson belül történetek. Ez azért olyan lényeges, mert operációs rendszer és egyéb memória kezelési tényezők miatt, az első kimásolás akár 25\% al is lassabb lehet mint az azt követőek ugyan azon pufferből.
+Fontos megjegyezni, hogy a mérések egy program futtatáson belül történtek. Ez azért olyan lényeges, mert operációs rendszer és egyéb memória kezelési tényezők miatt, az első kimásolás akár 25\%-al is lassabb lehet, mint az azt követőek, ugyan azon pufferből.
 
 A másik módszer, miszerint nem olvassuk ki azonnal a teljes választ, hanem alkalmazzuk az előző fejezetben taglalt optimalizálási eljárást.
 Ennek hatékonysága a sok kisebb olvasás miatt függ az eredmények számától. Ennek méréséhez módosítani kell a kernel kódot, ezért manuálisan végeztem a méréseket, vagyis a szűrési feltételeket úgy módosítottam, hogy a találatok száma megfelelően változzon.
@@ -171,13 +171,13 @@ Végeredményként \aref{fig:outpuffer2_1}. és \aref{fig:outpuffer2_2}. ábrák
 \SubSection{A globális méretből adódó sebességek}
 
 A megfelelő globális méret meghatározása futási idő szempontjából nagyon fontos.
-
+\noindent
 A túl nagy globális méret hatásai a következők.
 \begin{itemize}
 \item A lokális méret korlátai miatt túl sok csoport jön létre, így azok feldolgozása soros lesz.
 \item A kimeneti számláló mérete megnő, ennek kiolvasása több idő, és alacsony találati szám mellett a fölösleges ellenőrzések száma szignifikáns lehet.
 \end{itemize}
-
+\noindent
 A túl alacsony globális méret hatásai pedig az alábbiak.
 \begin{itemize}
 \item A lokális méretet is szükséges lehet csökkenteni. Ha túl alacsony, akkor egyetlen munkaelem fogja végrehajtani, a párhuzamosság teljesen megszűnik.
@@ -186,7 +186,7 @@ A túl alacsony globális méret hatásai pedig az alábbiak.
 A méréseket ezen pontok alapján a következők szerint végeztem.
 A globális méret változzon $[1, 2^{20}]$ tartományon, a lokális pedig $[1, 1024]$ tartományon négyzetes lépcsőkkel, az oszthatóságra figyelve.
 
-A Gantt diagramhoz \texttt{ganttt}, a további grafikonokhoz tartozó pedig \\
+A Gantt diagramhoz \texttt{gantt}, a további grafikonokhoz tartozó pedig \\
 \texttt{global\_size\_speed} néven szerepel az elkészített programok között. Nézzük meg ezek működését!
 \begin{python}  
 timer.start();
@@ -216,7 +216,7 @@ myfile << timer.elapsedMicroseconds() << ",";
 Szembetűnő lehet az egymásba ágyazott két ciklus. Azért szerepel ez kódrészlet a mérésekbe, hogy az eredményeken való végiglépegetés idejének nagyságrendje valamilyen módon meghatározható legyen. Fontos megjegyezni, hogy a fordítás során nem kerül figyelmen kívül hagyásra ez a két ciklus.
 
 \Aref{fig:gantt}. ábrán látható Gantt-diagram mutatja részletesen, hogy mely program szakasz mennyi időbe telik.
-Minden esetben a Lokális méret 32 és a visszatérő értékek száma körülbelül $50\%$, az eredményben pedig csak az index szerepel.
+Minden esetben a lokális méret 32 és a visszatérő értékek száma körülbelül $50\%$, az eredményben pedig csak az index szerepel.
 
 \begin{figure}[h!]
 \centering
@@ -227,7 +227,7 @@ Minden esetben a Lokális méret 32 és a visszatérő értékek száma körülb
 
 Látható, hogy a túl alacsony globális méret túl magas kernel futási időt eredményez. Túl nagy méret esetében pedig az eredmények kezelésének ideje válik számításigényessé.
 
-(A diagram előállításához használt kód megtalálható a programok, \texttt{gantt} nevű mappában.)
+(A diagram előállításához használt kód megtalálható a programok/\texttt{gantt} nevű mappában.)
 
 \begin{figure}[h!]
 \centering
@@ -236,9 +236,9 @@ Látható, hogy a túl alacsony globális méret túl magas kernel futási időt
 \label{fig:global_size_1}
 \end{figure}
 
-Az eredményt megvizsgálva látható, hogy van egy optimális globális méret tartomány $262144$ és $1024$ között (\ref{fig:global_size_1}. ábra).
+Az eredményt megvizsgálva látható, hogy van egy optimális globális méret tartomány $1024$ és $262144$ között (\ref{fig:global_size_1}. ábra).
 Azt is észrevehetjük, hogy bizonyos lokális méretek ebben a tartományban drasztikusan rosszabb eredményt mutatnak.
-A 16 és 32 -es méretek állnak legközelebb az ideális futási időhöz.
+A 16-os és 32-es méretek állnak legközelebb az ideális futási időhöz.
 
 \begin{figure}[h!]
 \centering
@@ -248,16 +248,16 @@ A 16 és 32 -es méretek állnak legközelebb az ideális futási időhöz.
 \end{figure}
 
 \Aref{fig:global_size_2}. grafikonon egy olyan mérés látható, ahol a kernelben található feltételt úgy állítottam be, hogy megközelítőleg csak a tábla méretének 10\% -ával térjen vissza a lekérdezés.
-Azt láthatjuk, hogy az előző középen lévő hullám lesimul, ez részben annak köszönhető hogy a kernel futási ideje csökken azzal, hogy nem kell annyi indexet az eredmény tömbbe írnia.
+Azt láthatjuk, hogy az előző középen lévő hullám lesimul, ez részben annak köszönhető, hogy a kernel futási ideje csökken azzal, hogy nem kell annyi indexet az eredmény tömbbe írnia.
 
-Azoknál a lekérdezéseknél, a kernelnek nem csak egy indexszel kell visszatérnie hanem több kalkulált értékkel is, ott is hasonló grafikonokat kapunk. De a kernel növekvő munkája és a megnövekedett adatmennyiség kiolvasása miatt a középen lévő hullám nagyobb és nehezebben lapul le.
+Azoknál a lekérdezéseknél a kernelnek nem csak egy indexszel kell visszatérnie, hanem több kalkulált értékkel is, ott is hasonló grafikonokat kapunk. De a kernel növekvő munkája és a megnövekedett adatmennyiség kiolvasása miatt a középen lévő hullám nagyobb és nehezebben lapul le.
 
 Ezek alapján azt mondhatjuk, hogy közel ideális választás volt az 1024 mint globális méret.
 
 \Section{Gyakorlati példák és következtetések}
 
-A hatékonyság megállapításához a \textit{A MySQL lekérdezés sebessége} részben használt módszert fogom alkalmazni.
-A fejezetben előfordulnak rövidítések: CONN - a MySQL Connector programra a CL pedig az OpenCL -t használó programra utal. 
+A hatékonyság megállapításához a \textit{A \texttt{MySQL} lekérdezés sebessége} részben használt módszert fogom alkalmazni.
+A fejezetben előfordulnak rövidítések: CONN - a \texttt{MySQL Connector} programra a CL pedig az \texttt{OpenCL} -t használó programra utal. 
 A k betű ezres szorzót, az i betű pedig indexelés használatot jelöl.
 \newline Bontsuk az \texttt{OpenCL} programot négy részre:
 \begin{itemize}
@@ -276,7 +276,7 @@ Az eredmény kezelése résznél azt vizsgáljuk melyik esetben gyorsabb az ered
 
 \SubSection{Egy táblás lekérdezés}
 
-(Forrás: programok, \texttt{program\_test}, \texttt{where} mappa.)
+(Forrás: programok, \texttt{program\_test}/\texttt{where} mappa.)
 
 \begin{python}
 SELECT * FROM speedtest_1048576 WHERE c3 = 1 AND c4 > 5001;
@@ -347,7 +347,7 @@ Eredmény kiírás & 11897 $\mu s$ & 916984 $\mu s$ \\
 \end{tabular}
 \end{table}
 
-Láthatjuk, hogy összességében az OpenCL megvalósítás sokkal lassabb. De vegyük észre, hogy a program legtöbb részének csak egyszer kell lefutnia. 
+Láthatjuk, hogy összességében az \texttt{OpenCL} megvalósítás sokkal lassabb. De vegyük észre, hogy a program legtöbb részének csak egyszer kell lefutnia. 
 Több lekérdezés végezhető úgy, hogy csak a  kernel és eredménykiolvasás idejét kell többszörözni. Ezen kívül szembetűnő az is, hogy a tömbben lévő adatokat gyorsabban lehet kezelni.
 
 Úgy gondolom meg kell jegyezni azt is, hogy a tábla utólagos indexelése megközelítőleg 5,5 másodpercet vett igénybe.
@@ -374,15 +374,15 @@ Lekérdezés, kernel(ek) futása, eredmény kiolvasás, eredmény kiírás.
 
 A mérésekből a következő következtetéseket vonhatjuk le:
 \begin{itemize}
-	\item 0.5\% os visszatérési arany esetében ha nincs indexelés, akkor 7 lekérdezés után megtérülhetnek az \texttt{OpenCL} plusz költségei.
+	\item 0.5\%-os visszatérési arany esetében, ha nincs indexelés, akkor 7 lekérdezés után megtérülhetnek az \texttt{OpenCL} plusz költségei.
 	\item Ha van indexelés abban az esetben ez a szám eléri a 37 -et.\newline
-	50\% -os visszatérési aránynál már a 2. lekérdezésnél is nyereséges az \texttt{OpenCL} -es megvalósítás. 
+	50\%-os visszatérési aránynál már a 2. lekérdezésnél is nyereséges az \texttt{OpenCL} -es megvalósítás. 
 \end{itemize}
 
 \Aref{fig:where}. ábrán látható grafikonon a \texttt{CONN 500k} és \texttt{CONN 500k i} szinte egymást fedi, amiből látjuk, hogy ha a válaszban visszatérő sorok száma magas, akkor az indexelés hatékonysága alacsony.
 
 \SubSection{Két táblás lekérdezés}
-Forrás: programok, program\_test, join mappa.
+(Forrás: programok, \texttt{program\_test}/\texttt{join} mappa.)
 
 Ehhez a részhez új adatbázist hoztam létre, az \texttt{EXPLAIN} bemutatásánál használthoz hasonlóan, de jelentősen nagyobb méretekkel, erre a tábla neve utal.
 A generáláshoz szükséges kód megtalálható a \texttt{table gen} mappában.
@@ -443,7 +443,7 @@ Eredmény kiírás & 97 $\mu s$ & 2802 $\mu s$ \\
 \end{tabular}
 \end{table}
 
-OpenCL megvalósítás
+\texttt{OpenCL} megvalósítás
 
 \begin{table}[h!]
 \centering
@@ -476,7 +476,7 @@ Az \texttt{OpenCL} -es futási időket igyekeztem optimalizálni azzal, hogy a s
 
 \Aref{fig:join}. ábrán a méréseket látva, arra a következtetésre juthatunk, hogy az \texttt{OpenCL} program nem bizonyul hatékonynak, még ilyen alacsony találati számnál sem. A kiolvasási időt tovább lehetne optimalizálni az előzőekben említett másik módszerrel, ezzel akár tizedére is csökkenhet a kiolvasási idő, illetve minimálisan javulhat a kiírási idő is. Ez a kis számú lekérdezés annyira speciális esete lenne a lekérdezéseknek, hogy nem vizsgálom tovább.
 
-A táblakapcsolás nélküli lekérdezéshez viszonyított drámai teljesítmény romlás oka az hogy a \texttt{MySQL} motorja a táblák kapcsolásánál felhasználja a másodlagos kulcsokat mint index így nem kell végignéznie minden sort a párokat keresve.
+A táblakapcsolás nélküli lekérdezéshez viszonyított drámai teljesítmény romlás oka az, hogy a \texttt{MySQL} motorja a táblák kapcsolásánál felhasználja a másodlagos kulcsokat, mint index, így nem kell végignéznie minden sort a párokat keresve.
 
 Valamilyen indexelési módszer használatával az \texttt{OpenCL} megvalósítás is optimalizálható lenne, ám ez bonyolult és költséges lehet.
 

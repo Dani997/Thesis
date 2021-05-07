@@ -1,10 +1,10 @@
 \Chapter{Saját kód elhelyezése}
 
-Az adatbázis lekérdezések optimalizálása kapcsán felvetődik a kérdés, hogy az optimalizálást pontosan hol lehet és hol érdemes elvégezni. A fejezet ennek a lehetőségeit vizsgálja meg a közvetlenül az adatbázis forráskódjában való elhelyezéssel és egy saját \textit{Connector Proxy} bemutatásával.
+Az adatbázis lekérdezések optimalizálása kapcsán felvetődik a kérdés, hogy az optimalizálást pontosan hol lehet és hol érdemes elvégezni. A fejezet ennek a lehetőségeit vizsgálja meg, közvetlenül az adatbázis forráskódjában való elhelyezéssel, és egy saját \textit{Connector Proxy} bemutatásával.
 
-\Section{A MySQL adatbázis fordítása és telepítése}
+\Section{A \texttt{MySQL} adatbázis fordítása és telepítése}
 
-A MySQL forráskódból való fordítását egy frissen telepített és naprakészre frissített Manjaro 20.2.1-es GNU/Linux disztribúción végeztem el. Telepítés során \textit{non-free} grafikus drivert választottam.
+A \texttt{MySQL} forráskódból való fordítását egy frissen telepített és naprakészre frissített Manjaro 20.2.1-es GNU/Linux disztribúción végeztem el. Telepítés során \textit{non-free} grafikus drivert választottam.
 A forrásállomány bárki számára elérhető, és a következő paranccsal klónozható:
 \begin{python}
 $ git clone https://github.com/mysql/mysql-server.git
@@ -21,20 +21,20 @@ A fordítás sikerességéhez rendszerenként eltérő csomagok telepítésére 
  $ sudo pacman -S bison
 \end{python}%$
 %A \textit{Boost} függvénykönyvtár később kapcsoló használatával letölthető.
-A következő lépés a \texttt{CMake} futtatása. Ehhez célszerű létrehozni egy mappát ahová az új állományok létrejöhetnek. Ezt nem kötelező megtenni, a forrás könyvtárban is ki lehet adni a parancsot, ehhez a \texttt{CMake} megfogja adni a szükséges kapcsolót illetve figyelmeztet arra, hogy nem ajánlatos.
+A következő lépés a \texttt{CMake} futtatása. Ehhez célszerű létrehozni egy mappát ahová az új állományok létrejöhetnek. Ezt nem kötelező megtenni, a forrás könyvtárban is ki lehet adni a parancsot, ehhez a \texttt{CMake} meg fogja adni a szükséges kapcsolót, illetve figyelmeztet arra, hogy nem ajánlatos.
 \begin{python}
 $ mkdir build
 \end{python}%$
-Amint ez kész a forrás mappájában futtathatjuk a következő parancsot:
+Amint ez kész, a forrás mappájában futtathatjuk a következő parancsot:
 \begin{python}
 $ cmake ./ ../build -DDOWNLOAD_BOOST=1 -DWITH_BOOST=../boost/
 \end{python}%$
-A megadott kapcsolóval a \textit{Boost} könyvtár letöltődik a megadott helyre, és a \texttt{CMake} regisztrálja ezt. Ha a generátor hibába ütközik a szükséges csomagokat telepíteni kell, és a \texttt{CMakeCache.txt} fájlt törtölni. Ezek után a \texttt{CMake} újra futtatható, de már a \textit{Boost}-hoz tartozó kapcsolók nélkül.
+A megadott kapcsolóval a \textit{Boost} könyvtár letöltődik a megadott helyre, és a \texttt{CMake} regisztrálja ezt. Ha a generátor hibába ütközik, a szükséges csomagokat telepíteni kell, és a \texttt{CMakeCache.txt} fájlt törtölni. Ezek után a \texttt{CMake} újra futtatható, de már a \textit{Boost}-hoz tartozó kapcsolók nélkül.
 
 A sikeres futás jelzi, hogy minden készen áll a fordításra, nincs hiányzó csomag.
 A \texttt{make} parancs futtatása következik. Ez egy hosszú folyamat, jelen konfiguráción 120 percet vett igénybe. 
 
-A sikeres fordítást követően létre kell hoznunk egy data mappát a szerver számára.
+A sikeres fordítást követően létre kell hoznunk egy \texttt{data} mappát a szerver számára.
 \begin{python}
 $ mkdir data
 \end{python}%$
@@ -53,23 +53,23 @@ A szerverre csatlakozni a következő paranccsal tudunk.
 \begin{python}
 $ ./bin/mysql -u root -p
 \end{python}%$
-A generált jelszó bemásolásával belépünk. Majd megváltoztatjuk azt.
+A generált jelszó bemásolásával belépünk, majd megváltoztatjuk azt.
 \begin{python}
 ALTER USER 'root'@'localhost' IDENTIFIED BY 'uj jelszo';
 \end{python}
-Használhatjuk a MySQL Workbench-et ami első belépéskor megkér minket a módosításra.
+Használhatjuk a \texttt{MySQL Workbench}-et is, ami első belépéskor megkér minket a módosításra.
 % TODO: SQL-es környezetet lesz majd célszerű használni helyette!
 
-\Section{A MySQL Connector}
+\Section{A \texttt{MySQL} Connector}
 
 A \texttt{Connector} \textit{MySQL} alapszabványú \textit{driver}-eket biztosít különböző nyelveken, amelyek lehetővé teszik a fejlesztők számára, hogy adatbázis alkalmazásokat írjanak a támogatott nyelveken \cite{connector}. Ezen kívül egy natív \textit{C} könyvtár teszi lehetővé azt, hogy a \textit{MySQL}-t közvetlenül beágyazhassák alkalmazásaikba.
-A következő \texttt{MySQL} által fejlesztett driverek érhetőek el:
+A következő \texttt{MySQL} által fejlesztett driver\-ek érhetőek el:
 \begin{itemize}
 	\item \texttt{ADO.NET}, \texttt{ODBC}, \texttt{JDBC}, \texttt{Node.js}, \texttt{Python}, \texttt{C++}, \texttt{C} és \texttt{C API} a klienshez,
 \end{itemize}
 az alábbiakat pedig a \texttt{MySQL} közössége fejleszti:
 \begin{itemize}
-	\item \texttt{PHP}, \texttt{Perl}, \texttt{Ruby}, \texttt{C+ Wrapper}.
+	\item \texttt{PHP}, \texttt{Perl}, \texttt{Ruby}, \texttt{C++ Wrapper}.
 \end{itemize}
 
 \SubSection{A Connector/C++ használata}
@@ -90,8 +90,8 @@ CREATE USER 'newuser'@'localhost' IDENTIFIED BY 'password';
 \SubSection{Első program}
 
 Kipróbálni például a dolgozathoz mellékelt \texttt{mysql\_speed} mappában lévő programmal lehetséges.
-
-A \textit{Connector} használatához a következő osztályok létrehozása szükséges \cite{connector_program}:
+ 
+A \texttt{Connector} használatához a következő osztályok létrehozása szükséges \cite{connector_program}:
 \begin{cpp}
 sql::Driver *driver;
 sql::Connection *con;
@@ -133,11 +133,11 @@ $ ./connectortest.out
 
 \Section{Connector proxy létrehozása}
 
-Azt feltételezhetjük, hogy a rendelkezésre álló MySQL elérési felületet érdemes megtartani valamilyen formában a lekérdezések optimalizálása során. Ez többek között az alábbiakkal indokolható.
+Azt feltételezhetjük, hogy a rendelkezésre álló \texttt{MySQL} elérési felületet érdemes megtartani valamilyen formában a lekérdezések optimalizálása során. Ez többek között az alábbiakkal indokolható.
 \begin{itemize}
-	\item A felület jól átgondolt, a területen járatos szakemberek készítették és a használat szempontjából kiállta az idő próbáját.
+	\item A felület jól átgondolt, a területen járatos szakemberek készítették, és a használat szempontjából kiállta az idő próbáját.
 	\item Elterjedt. Amennyiben az a cél, hogy az elkészített szoftver előnyeit minél többen használni tudják, és akarják is, arra kell törekedni, hogy az új felhasználóknak minél kevesebb plusz munkát jelentsen az elsajátítása.
-	\item Lehetőséget ad, hogy egy saját implementációval transzparens módon megoldható legyen az optimalizálás. Ez olyan szempontból kifejezetten praktikus, hogy így opcionálissá tehető az optimalizálási módszer használata. A szokványos és a dolgozatban bemutatásra kerülő OpenCL-el optimalizált elérés között a váltás kényelmesen megtehető.
+	\item Lehetőséget ad, hogy egy saját implementációval transzparens módon megoldható legyen az optimalizálás. Ez olyan szempontból kifejezetten praktikus, hogy így opcionálissá tehető az optimalizálási módszer használata. A szokványos és a dolgozatban bemutatásra kerülő \texttt{OpenCL}-el optimalizált elérés között a váltás kényelmesen megtehető.
 \end{itemize}
 
 A \textit{proxy} nevű tervezési minta kiválóan alkalmas lehet az említett feladat megoldására. \Aref{fig:proxy_arch}. ábrán bal oldal láthatjuk a hagyományos módszert, ahogy az adatokhoz hozzá lehet férni egy alkalmazásból. A jobb oldalt a proxy segítségével optimalizált változat látható.
@@ -163,7 +163,7 @@ Ennek az egyik igen fontos eleme az előzetes kiértékelő, amely a kapott lek�
 	\item Mivel ennek egy gyors döntést kell hoznia, a lekérdezést nem fogja végrehajtani, ezért csak egy becslést ad arra, hogy melyik végrehajtási mód lehet megfelelő.
 	\item A kimenete egyszerűen csak egy logikai érték.
 	\item Figyelembe kell vennie a lekérdezés összetettségét, az aktuálisan rendelkezésre álló számítási kapacitásokat, és adatbázisban lévő adatok mennyiségét.
-	\item Adhatunk lehetőséget a felhasználónak, hogy direkt módon döntsön a feldolgozás menetéről. Ha a felhasználó ismeri a rendszer előnyeit, hátrányait olykor könnyedén dönthet arról, hogy használja -e az \texttt{OpenCL}-es kiértékelést. Például ha sok visszatérő sorrá számít akkor használja, ha nem biztos, akkor automatikus módban hagyja.
+	\item Lehetőséget adhatunk a felhasználónak, hogy direkt módon döntsön a feldolgozás menetéről. Ha a felhasználó ismeri a rendszer előnyeit, hátrányait olykor könnyedén dönthet arról, hogy használja-e az \texttt{OpenCL}-es kiértékelést. Például ha sok visszatérő sorra számít akkor használja, ha nem biztos, akkor automatikus módban hagyja.
 \end{itemize}
 
 A következő fontos elem a lekérdezés átalakítása, amely a lekérdezést szétválasztja adatgyűjtési és kiértékelési részekre.
@@ -176,10 +176,10 @@ A következő fontos elem a lekérdezés átalakítása, amely a lekérdezést s
 
 \SubSection{Az API illesztése}
 
-A dolgozat keretein belül nem cél a teljes Connector interfész megvalósítása, csak annak egy részhalmaza. Mivel proxy-ról van szó, ezért az összes olyan művelet átkötése mennyiségi problémát jelent csak, amely nem változtatja meg a végrehajtás módját.
+A dolgozat keretein belül nem cél a teljes \texttt{Connector} interfész megvalósítása, csak annak egy részhalmaza. Mivel proxy-ról van szó, ezért az összes olyan művelet átkötése mennyiségi problémát jelent csak, amely nem változtatja meg a végrehajtás módját.
 
 A driver beállítások és az adatbázishoz kapcsolódás változatlan kell legyen, mivel azok szükségesek ahhoz, hogy hozzáférjünk az adatbázishoz.
 
-A különbség a \texttt{prepareStatement} kapcsán jelenik meg. Ehhez kell tehát egy saját implementációt adni, amelyik kompatibilitási okokból származhat közvetlenül az \texttt{sql::PreparedStatement} osztályból. Hogy ha azt szeretnénk, hogy a kódban csak az \texttt{include}-okat kelljen megváltoztatni, akkor érdemes a \texttt{Driver} és \texttt{Connection} osztályokat szintén származtatni. Mivel az interfész megtartható, ezért statikus linkeléssel is lehetőség adódhat a funkció cseréjére, vagyis hogy a fejlesztő (mint célfelhasználó) a saját alkalmazásához nem a \texttt{Connector}-t fogja használni, hanem a proxy-t (amely aztán használja a \texttt{Connector}-t).
+A különbség a \texttt{prepareStatement} kapcsán jelenik meg. Ehhez kell tehát egy saját implementációt adni, amelyik kompatibilitási okokból származhat közvetlenül az \texttt{sql::PreparedStatement} osztályból. Hogyha azt szeretnénk, hogy a kódban csak az \texttt{include}-okat kelljen megváltoztatni, akkor érdemes a \texttt{Driver} és \texttt{Connection} osztályokat szintén származtatni. Mivel az interfész megtartható, ezért statikus linkeléssel is lehetőség adódhat a funkció cseréjére, vagyis hogy a fejlesztő (mint célfelhasználó) a saját alkalmazásához nem a \texttt{Connector}-t fogja használni, hanem a proxy-t (amely aztán használja a \texttt{Connector}-t).
 
 

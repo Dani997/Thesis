@@ -2,7 +2,7 @@
 
 % TODO: Indexelés kifejtése
 
-A fejlettebb adatbázismotorok esetében közvetlenül elérhetőek beépített paraméterek és eszközök a számítási teljesítmény és a tárolási mód optimalizálásához. A következőkben az indexeléssel kapcsolatos lehetőségeket, majd a MySQL specifikus beállításait részletezi a fejezet.
+A fejlettebb adatbázismotorok esetében közvetlenül elérhetőek beépített paraméterek és eszközök a számítási teljesítmény és a tárolási mód optimalizálásához. A következőkben az indexeléssel kapcsolatos lehetőségeket, majd a \texttt{MySQL} specifikus beállításait részletezi a fejezet.
 
 \Section{Indexelés}
 %https://www.sqlshack.com/query-optimization-techniques-in-sql-server-the-basics/
@@ -51,7 +51,7 @@ A denormalizálás célja az olvasási sebesség javítása azzal, hogy szándé
 
 \Section{Egyéb optimalizálási paraméterek}
 
-Az adatbázis sebességét nem csak annak megfelelő kialakításával segíthetjük elő, hanem a megfelelő adatbázis kezelő kiválasztásával és annak helyes konfigurálásával.
+Az adatbázis sebességét nem csak annak megfelelő kialakításával segíthetjük elő, hanem a megfelelő adatbázis-kezelő kiválasztásával és annak helyes konfigurálásával.
 Jelen esetben a \texttt{MySQL}-t használjuk, melyhez több motor is elérhető. Alapértelmezett módon ez az \texttt{InnoDB}, de ezen kívül elérhető a \texttt{MyISAM}-is. Utóbbinak hátránya, hogy nem támogatja a sor szintű zárolást, idegen kulcsokat és tranzakciókat. A \texttt{MyISAM} választása emiatt viszonylag ritkán tekinthető jobb döntésnek. Íme néhány fontosabb konfigurációs beállítás, amellyel javíthatjuk az adatbázisunk teljesítményét \cite{other_optimization}.
 \begin{itemize}
 \item \texttt{innodb buffer pool size}: A motor gyorsítótárának mérete. Elérheti a szerver memória 80-90\% -át is ha ez szükséges.

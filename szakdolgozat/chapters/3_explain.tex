@@ -1,6 +1,6 @@
 \Chapter{SQL lekérdezések végrehajtása}
 
-A fejezet áttekinti és példákon keresztül bemutatja, hogy a lekérdezések végrehajtási módját hogyan lehet elemezni, azt így nyert információkat felhasználni a lekérdezés hatékonyabbá tételének érdekében.
+A fejezet áttekinti és példákon keresztül bemutatja, hogy a lekérdezések végrehajtási módját hogyan lehet elemezni, az így nyert információkat felhasználni a lekérdezés hatékonyabbá tételének érdekében.
 
 A lekérdezés \textit{végrehajtási terv} (\textit{Execution Plan}) elkészítésével információkat nyerhetünk a lekérdezések hatékonyságáról. Ennek segítségével optimalizálhatjuk például egy olyan weboldal működését, mely sok és/vagy bonyolult lekérdezést végez adatbázisból. A hatékonyságot általában indexek hozzáadásával vagy elvételével illetve a táblák kapcsolási sorrendjének módosításával vagy kapcsolási módjának megváltoztatásával segíthetjük elő.
 
@@ -10,9 +10,9 @@ A lekérdezés \textit{végrehajtási terv} (\textit{Execution Plan}) elkészít
 Az utasítás megfelelő kifejezéssel együtt használva (\texttt{SELECT}, \texttt{DELETE}, \texttt{INSERT}, \texttt{REPLACE}, \texttt{UPDATE})  információkat jelenít meg az optimalizáló által előállított feldolgozási tervről. Láthatóvá válik például a táblák összekapcsolási sorrendje és a használt index neve.
 
 További információk érhetők el a \texttt{SHOW WARNINGS} használatával.
-A \texttt{FORMAT} parancs használható kimeneti formátum választásra. A \texttt{TRADITIONAL} az alapértelmezett táblázatos alak, továbbá a \texttt{JSON} ami elnevezésének megfelelő formátumban jelenti meg a kimenetet. A formátumokról egy rövid áttekintést láthatunk \aref{tab:explain}. táblázatban.
+A \texttt{FORMAT} parancs használható kimeneti formátum választásra. A \texttt{TRADITIONAL} az alapértelmezett táblázatos alak, továbbá a \texttt{JSON}, ami elnevezésének megfelelő formátumban jelenti meg a kimenetet. A formátumokról egy rövid áttekintést láthatunk \aref{tab:explain}. táblázatban.
 
-A parancs használata rávilágít arra, hogy hol van szükség indexek használatára a lekérdezés gyorsításához, illetve ellenőrizhetjük, hogy a táblák megfelelő sorrendben vannak -e összekapcsolva. 
+A parancs használata rávilágít arra, hogy hol van szükség indexek használatára a lekérdezés gyorsításához, illetve ellenőrizhetjük, hogy a táblák megfelelő sorrendben vannak-e összekapcsolva. 
 
 \texttt{JOIN} helyett \texttt{STRAIGHT\_JOIN} használatával tippek adhatók az optimalizálás elvégzéséhez a táblák kapcsolási sorrendjéről. Érdemes azonban figyelembe venni, hogy a \texttt{STRAIGHT\_JOIN} letiltja a \texttt{semijoin} transzformációkat, így indexelés ebben az esetben nem használható.
 
@@ -57,7 +57,7 @@ filtered & filtered & a szűrt sorok százaléka a tábla állapota szerint \\
 \Section{Teszt adatbázis megtervezése}
 
 Az execution plan optimalizálási módnál a kapott információk felhasználásával tudjuk optimalizálni a lekérdezéseket.
-Olyan adatbázist kell választanunk ennek kipróbálásához, amelyben használhatók indexek de nincs feltétlen szükség rájuk, össze kapcsolhatunk több táblát és rendezhetjük az adatokat, például növekvő sorrendbe. A felhasználási mód miatt kevés dologra kell ügyelnünk a tábláknál, ilyen például a \texttt{NOT NULL} megkötés. A táblák minden eleme \texttt{INT} típusú, és csak a feltöltött adatok értékének intervalluma tér el. Az elsődleges kulcs minden esetben 0-tól $(N-1)$-ig tart.
+Olyan adatbázist kell választanunk ennek kipróbálásához, amelyben használhatók indexek, de nincs feltétlen szükség rájuk, összekapcsolhatunk több táblát, és rendezhetjük az adatokat, például növekvő sorrendbe. A felhasználási mód miatt kevés dologra kell ügyelnünk a tábláknál, ilyen például a \texttt{NOT NULL} megkötés. A táblák minden eleme \texttt{INT} típusú, és csak a feltöltött adatok értékének intervalluma tér el. Az elsődleges kulcs minden esetben 0-tól $(N-1)$-ig tart.
 
 A táblákat \texttt{T} betűvel és sorszámmal jelöltem. A táblák oszlopait \texttt{c}-vel (mint \textit{column}) sorszámozott formában adtam meg. Ezek közül a \texttt{c1} az elsődleges kulcsot jelöli. A további oszlopok esetében az értékek különböző intervallumokon változtak, és véletlenszerű értékekkel töltöttem ki. Ezek áttekintését láthatjuk a következőkben.
 
@@ -132,7 +132,7 @@ SELECT * FROM thesis.T1 WHERE c3 = 25;
 \label{fig:explain_1_1}
 \end{figure}
 
-A program által előállított végrehajtási terven látható (\ref{fig:explain_1_1}. ábra), hogy a \texttt{T1} -es tábla összes sorát át kell vizsgálni a megfelelő értékek megtalálásához. Erre nyújthat megoldást a vizsgált oszlop indexelése, melynek segítségével optimális sebességgel lehet meghatározni az értékek helyét.
+A program által előállított végrehajtási terven látható (\ref{fig:explain_1_1}. ábra), hogy a \texttt{T1}-es tábla összes sorát át kell vizsgálni a megfelelő értékek megtalálásához. Erre nyújthat megoldást a vizsgált oszlop indexelése, melynek segítségével optimális sebességgel lehet meghatározni az értékek helyét.
 
 Indexek hozzáadása a \texttt{c3} -as oszlophoz:
 \begin{python} 
@@ -168,7 +168,7 @@ SELECT MAX(c4), c3, c2 FROM thesis.T1 WHERE T1.c3 = 18 GROUP BY c2;
 \label{fig:explain_2_1}
 \end{figure}
 
-A lekérdezés elemzésénél két problémát fedezhetünk fel (\ref{fig:ig:explain_2_1}. ábra). Az egyik, hogy a teljes tábla átvizsgálásra kerül, a másik pedig egy ideiglenes tábla létrejötte, ami a lekérdezés idejére memóriát foglal.
+A lekérdezés elemzésénél két problémát fedezhetünk fel (\ref{fig:explain_2_1}. ábra). Az egyik, hogy a teljes tábla átvizsgálásra kerül, a másik pedig egy ideiglenes tábla létrejötte, ami a lekérdezés idejére memóriát foglal.
 
 \begin{figure}[h!]
 \centering
@@ -196,7 +196,7 @@ ALTER TABLE thesis.T1 DROP INDEX covered;
 
 \SubSection{Kapcsolt táblák}
 
-Ez a lekérdezés már összetettebb, annak érdekében, hogy látszódjon a lekérdezés optimalizáló mely esetekben milyen sorrendben kapcsolja össze a táblákat.
+Ez a lekérdezés már összetettebb, annak érdekében, hogy látszódjon a lekérdezés optimalizáló mely esetekben, milyen sorrendben kapcsolja össze a táblákat.
 \begin{python}
 SELECT T1.c3, T2.c2, T3.c3
 FROM T3 JOIN T2 JOIN T1 
@@ -213,7 +213,7 @@ WHERE T3.c4 = 5 AND T1.c2 = 1;
 
 Az első észrevétel, hogy a táblák kapcsolási sorrendje nem egyezik a lekérdezésben szereplő sorrenddel, tehát egyszerű \texttt{JOIN} esetében ezzel nem kell törődni. Láthatjuk, hogy a teljes tábla átvizsgálása itt is problémát jelent (\ref{fig:explain_3_1}. ábra). 
 
-Miután a \texttt{T3}-as tábla vizsgált oszlopát indexeléssel láttam el, szinte ugyan ezt az eredményt kaptam, leszámítva két értéket. \texttt{T3}-nál a költség 1190.96-ról 1198.86-ra nőtt, illetve a 2. \texttt{nested loop}-nál a sorok száma 450 re csökkent.
+Miután a \texttt{T3}-as tábla vizsgált oszlopát indexeléssel láttam el, szinte ugyanezt az eredményt kaptam, leszámítva két értéket. \texttt{T3}-nál a költség 1190.96-ról 1198.86-ra nőtt, illetve a 2. \texttt{nested loop}-nál a sorok száma 450 re csökkent.
 
 \newpage
 

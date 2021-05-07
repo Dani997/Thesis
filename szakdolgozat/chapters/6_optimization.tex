@@ -1,6 +1,6 @@
 \Chapter{Lekérdezések optimalizálása}
 
-Az alap ötlet egyszerű. A MySQL szerverről lekérjük a tábla tartalmát, amit be másolunk az \textit{OpenCL} pufferébe, majd a kernelkód futtatása után az eredményt tartalmazó részeket kiolvassuk. Felvetődik azonban néhány problémás rész.
+Az alap ötlet egyszerű. A \texttt{MySQL} szerverről lekérjük a tábla tartalmát, amit bemásolunk az \textit{OpenCL} pufferébe, majd a kernelkód futtatása után az eredményt tartalmazó részeket kiolvassuk. Felvetődik azonban néhány problémás rész.
 \begin{itemize}
 	\item Hogyan tároljuk a tábla tartalmát?
 	\item Mekkora legyen a Globális munkaméret és a munkacsoport méret?
@@ -14,7 +14,7 @@ Az adatok feldolgozása egy többlépéses folyamat. A lekérdezés végrehajtá
 
 \SubSection{Táblák tömbbé alakítása}
 
-Ahhoz, hogy \textit{OpenCL} -el kezelni tudjuk az adatokat először szükségünk lesz egy struktúrára ami reprezentálja az adatbázis tábla felépítését. Az az a struktúra adattagjainak típusa egyezzen meg a táblázat oszlopainak típusával. Ezek után ebből létre kell hoznunk egy tömböt melynek hossza legalább annyi, mint a tábla sorainak száma (\ref{fig:structrue}. ábra).
+Ahhoz, hogy \textit{OpenCL} -el kezelni tudjuk az adatokat először szükségünk lesz egy struktúrára, ami reprezentálja az adatbázis tábla felépítését, azaz a struktúra adattagjainak típusa egyezzen meg a táblázat oszlopainak típusával. Ezek után ebből létre kell hoznunk egy tömböt, melynek hossza legalább annyi, mint a tábla sorainak száma (\ref{fig:structure}. ábra).
 
 \begin{figure}[h!]
 \centering
@@ -23,7 +23,7 @@ Ahhoz, hogy \textit{OpenCL} -el kezelni tudjuk az adatokat először szükségü
 \label{fig:structure}
 \end{figure}
 
-A következőket érdemes figyelembe venni.
+A következőket érdemes figyelembe venni:
 \begin{itemize}
 \item A struktúra megfelel a tábla felépítésének.
 \item A tömb típusa egy ilyen struktúra.
@@ -35,9 +35,9 @@ A következőket érdemes figyelembe venni.
 
 A fix sorszámmal rendelkező adatbázis táblák kezelése egy nagyon speciális eset lenne, ezért a programot úgy kell megírni, hogy igazodni tudjon a különböző táblaméretekhez.
 
-Mivel a tábla méret előre nem ismert ezért a tömböket a \texttt{malloc} függvénnyel lehet lefoglalni. Mivel a lekérdezést külön függvény végzi, és a méretet sem tudjuk előre, ezért a következő megoldást alkalmazom.
+Mivel a tábla méret előre nem ismert, ezért a tömböket a \texttt{malloc} függvénnyel lehet lefoglalni. Mivel a lekérdezést külön függvény végzi, és a méretet sem tudjuk előre, ezért a következő megoldást alkalmazom.
 
-Első lépésben létrehozok egy pointert ami később a táblára fog mutatni, most még \texttt{NULL} értékű, és ehhez egy változót ami a méretet tárolja. Az adatokat lekérő függvénynek átadom ezeket, és miután a \texttt{Connector} elvégezte a lekérdezést beállítom a méret változó értékét illetve a tábla memória területét csak ekkor foglalom le, és állítom rá a pointert. Ez úgy lehetséges, hogy a függvénynek egy pointerre mutató pointert adok át, ezáltal kettős indirektség jön létre (\ref{fig:pointer_01}. és \ref{fig:pointer_02}. ábra).
+Első lépésben létrehozok egy pointert, ami később a táblára fog mutatni, most még \texttt{NULL} értékű, és ehhez egy változót ami a méretet tárolja. Az adatokat lekérő függvénynek átadom ezeket, és miután a \texttt{Connector} elvégezte a lekérdezést beállítom a méret változó értékét, illetve a tábla memória területét csak ekkor foglalom le, és állítom rá a pointert. Ez úgy lehetséges, hogy a függvénynek egy pointerre mutató pointert adok át, ezáltal kettős indirektség jön létre (\ref{fig:pointer_01}. és \ref{fig:pointer_02}. ábra).
 
 \begin{cpp}
 Table1Type *t1 = NULL;
@@ -89,11 +89,11 @@ Ennél a pontnál oda kell figyelni pár alapvető dologra.
 
 Egyszerű esetben a bementi elemszámot megadhatjuk, mint globális méret, ez a gyakorlatban meghatározza, hogy hányszor fog lefutni a kernel függvény.
 
-A \texttt{get\_global\_id(0)} meghívásával megkapjuk az aktuális azonosítót, ez 0 -tól globális méret-1 ig terjed. Innentől tekinthetünk a teljes kódra úgy, mintha egy párhuzamos futó \texttt{for} ciklusban lenne.
+A \texttt{get\_global\_id(0)} meghívásával megkapjuk az aktuális azonosítót, ez 0-tól (globális méret-1)-ig terjed. Innentől tekinthetünk a teljes kódra úgy, mintha egy párhuzamos futó \texttt{for} ciklusban lenne.
 
 Ezen kívül meg kell adnunk a lokális méretet, ami az elemek száma egy munkacsoporton belül. A kernel futása közben ezt is megkaphatjuk a \texttt{get\_local\_id(0)} használatával, csak úgy, mint a munkacsoport azonosítót vagy az említett paraméterek méretét (\ref{fig:workgroups_black}. ábra).
 
-A végeredményt tartalmazó kimeneti tömb hossza egyezik a globális mérettel, így nem ütközhetünk bele abba a hibába, hogy két számítási elem ugyan oda próbáljon írni. Amennyiben például az 545. elem megfelel, akkor az indexe és egyéb hozzá tartozó értékek az 545. helyen lesznek a kimeneti tömbben.
+A végeredményt tartalmazó kimeneti tömb hossza egyezik a globális mérettel, így nem ütközhetünk bele abba a hibába, hogy két számítási elem ugyanoda próbáljon írni. Amennyiben például az 545. elem megfelel, akkor az indexe és egyéb hozzá tartozó értékek az 545. helyen lesznek a kimeneti tömbben.
 
 \begin{figure}[h!]
 \centering
@@ -115,13 +115,13 @@ A következő módon oldottam meg a problémát. Állítsuk a globális méretet
 \left\lceil \frac{\text{table\_size}}{\text{globalsize\_size}} \right\rceil.
 \end{align*}
 
-A módosításnak az lesz a következménye, hogy egy munkaelem nem csak a tömb egy elemén fog dolgozni, hanem egy intervallumán. Ezzel létrehoztunk olyan részeket a tömbben amiknek a feldolgozása biztosan soros lesz. Ennek köszönhetően már tudunk használni számlálókat, nincs szükség kölcsönös kizárásra. A számlálókat tartalmazó tömb mérete megegyezik a globális mérettel.
+A módosításnak az lesz a következménye, hogy egy munkaelem nemcsak a tömb egy elemén fog dolgozni, hanem egy intervallumán. Ezzel létrehoztunk olyan részeket a tömbben, amiknek a feldolgozása biztosan soros lesz. Ennek köszönhetően már tudunk használni számlálókat, nincs szükség kölcsönös kizárásra. A számlálókat tartalmazó tömb mérete megegyezik a globális mérettel.
 
 Ezekhez a paraméterekhez még tetszőlegesen meg kell határozni a lokális méretet, aminek csak a teljesítményre van hatása.
 
 \SubSection{A kernelkód működése}
 
-A kernel meghatározza saját globális azonosítóját és ebből illetve a kapott intervallum méretből kiszámítja, honnan kezdőik az ő része a be-, és kimeneti tömbön. Ezután elkezdi az intervallumnyi elem vizsgálatát ügyelve arra, hogy a tábla méretet ne lépje túl. Amennyiben egy elem megfelel a szűrési paramétereknek annak indexét és egyéb lekérdezés függő kiszámolt értékeket a kimeneti tömbbe másol, majd növeli saját számlálóját. Ez a számláló határozza meg, hogy a kimeneti szakaszon a következő elem hányadik helyre kerüljön.
+A kernel meghatározza saját globális azonosítóját és ebből illetve a kapott intervallum méretből kiszámítja, honnan kezdődik az ő része a be-, és kimeneti tömbön. Ezután elkezdi az intervallumnyi elem vizsgálatát ügyelve arra, hogy a tábla méretet ne lépje túl. Amennyiben egy elem megfelel a szűrési paramétereknek annak indexét és egyéb lekérdezés függő kiszámolt értékeket a kimeneti tömbbe másolja, majd növeli saját számlálóját. Ez a számláló határozza meg, hogy a kimeneti szakaszon a következő elem hányadik helyre kerüljön.
 
 \begin{figure}[h!]
 \centering
@@ -153,7 +153,7 @@ for (i = 0; i < global_size; i++)
         cout << t1[ result[ offset + j ].index ].c1p1 << endl;
 }
 \end{python}
-Végig kell menni a számlálón aminek hossza \texttt{global size}, majd az \texttt{ i * interval size} eltolást használva annyi elemet kell sorban kiolvasni az adott részről, amekkora érték a hozzá tartozó számlálóban található. Ezzel végig lépkedve és ugrálva a kimeneten ki tudjuk olvasni az indexeket illetve kiszámított értékeket.
+Végig kell menni a számlálón aminek hossza \texttt{global\_size}, majd az \texttt{ i * interval\_size} eltolást használva annyi elemet kell sorban kiolvasni az adott részről, amekkora érték a hozzá tartozó számlálóban található. Ezzel végig lépkedve és ugrálva a kimeneten ki tudjuk olvasni az indexeket, illetve kiszámított értékeket.
 
 \SubSection{Az elemek kiolvasása szakaszosan}
 
@@ -172,13 +172,13 @@ for (int i = 0; i < global_size; i++)
 }
 \end{python}
 
-Kiolvasásnál megadjuk az eltolást amit az előző módon számolunk annyi különbséggel, hogy megszorozzuk egy elem memória méretével:
+Kiolvasásnál megadjuk az eltolást, amit az előző módon számolunk annyi különbséggel, hogy megszorozzuk egy elem memória méretével:
 \begin{python}
-i * interval\_size * sizeof(TableResultType)
+i * interval_size * sizeof(TableResultType)
 \end{python}
-ezután megadjuk, hogy az eltolástól kezdve mekkora memória méretet szeretnénk kiolvasni, ezt a számlálóból tudjuk: 
+Ezután megadjuk, hogy az eltolástól kezdve mekkora memória méretet szeretnénk kiolvasni, ezt a számlálóból tudjuk: 
 \begin{python}
-result\_counter[i] * sizeof(TableResultType)
+result_counter[i] * sizeof(TableResultType)
 \end{python}
 Ezen kívül a másolás cél memóriacímét mindig eltoljuk, az eddigi találatok számával:
 \begin{python}
@@ -199,7 +199,7 @@ Ha memóriát is szeretnénk spórolni, megtehetjük azt is, hogy először öss
 Az előzőekben taglalt elméleti részek egy táblás lekérdezésekre vonatkozóan próbálták szemléltetni, milyen logika alapján lehet egy \textit{SQL} lekérdezést \textit{GPU}-n párhuzamosítva végrehajtani.
 
 Most gondoljuk át, miképpen lehetne megoldani kettő vagy több tábla összekapcsolását. 
-Első lépésben bontsuk a lekérdezést egy-egy táblára vonatkozó részekre. Ezzel két tábla kapcsolása esetén létrejöhet két különálló kernel amelyek például a szűréseket végzik a táblákon. Ennél a lépésnél két dolgot is szükséges kiemelni. Egyrészt ezeknek a kerneleknek az előállított eredményét nem kell kiolvasni a pufferekből, ugyanis ez a globális memóriában van, így átadható másik kernel számára is. Másrészt pedig ezek a kernelek ha van kapacitás, akkor futhatnak párhuzamosan is, ezt úgy lehet elérni, hogy külön parancssort hozunk létre számukra.
+Első lépésben bontsuk a lekérdezést egy-egy táblára vonatkozó részekre. Ezzel két tábla kapcsolása esetén létrejöhet két különálló kernel, amelyek például a szűréseket végzik a táblákon. Ennél a lépésnél két dolgot is szükséges kiemelni. Egyrészt ezeknek a kerneleknek az előállított eredményét nem kell kiolvasni a pufferekből, ugyanis ez a globális memóriában van, így átadható másik kernel számára is. Másrészt pedig ezek a kernelek, ha van kapacitás, akkor futhatnak párhuzamosan is, ezt úgy lehet elérni, hogy külön parancssort hozunk létre számukra.
 
 Miután minden nem összekapcsolást végző kernel befejezte a munkát, adjuk át a szükséges paramétereket a befejező kernelnek. A paraméter lista elég hosszú lesz, ennek az az oka, hogy az eredmények kiolvasása elő részében taglalt módon kell végig menni a szűrt táblákon. 
 
@@ -214,5 +214,5 @@ Ennek a kernelnek a globális mérete egyezzen meg a lekérdezésben szereplő l
 
 Az 1. és 2. kernel az előzőekben taglalt módon előállítja saját eredményeit (zöld rész). 
 A 3. kernel megkapja a két táblát, a 2. tábla méretét és az előző két kernel által előállított eredményeket.
-Az első eredmény kiolvasási módszer alkalmazásával és a kulcsok figyelésével a két táblát összekapcsoljuk és előállítjuk az eredményt.
-A táblák méretére nincsen szükség, ugyanis az eredmény biztosan nem tartalmaz olyan indexet ami kívül esne az eredeti táblákon. A második táblánál viszont szükség van a globális méretre is a kiolvasáshoz (\ref{fig:join_kernels}. ábra).
+Az első eredmény kiolvasási módszer alkalmazásával és a kulcsok figyelésével a két táblát összekapcsoljuk majd előállítjuk az eredményt.
+A táblák méretére nincsen szükség, ugyanis az eredmény biztosan nem tartalmaz olyan indexet, ami kívül esne az eredeti táblákon. A második táblánál viszont szükség van a globális méretre is a kiolvasáshoz (\ref{fig:join_kernels}. ábra).
