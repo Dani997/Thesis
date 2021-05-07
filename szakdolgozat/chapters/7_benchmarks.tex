@@ -128,15 +128,15 @@ Mivel ebben az esetben a másolás egybefüggő memória területre vonatkozik, 
 
 4 és 3 oszlop esetén:
 $$ x = \text{sorok száma} / 65536, $$
-$$ 348*x + 452 = \text{pufferbe másolás ideje}, $$ 
-$$ \text{pufferbe másolás ideje} * 0.75 = \text{3 oszlopos pufferbe másolás ideje}. $$
+$$ 348 \cdot x + 452 = \text{pufferbe másolás ideje}, $$ 
+$$ \text{pufferbe másolás ideje} \cdot 0.75 = \text{3 oszlopos pufferbe másolás ideje}. $$
 
 \SubSection{Adatok kimásolása a pufferekből}
 
 Nézzük az első kiolvasási módszert, amikor a teljes eredmény tömböt illetve a hozzá tartozó számlálót másoljuk ki.
 Jelen mérésnél a lista csak egyetlen indexet tartalmaz:
 $$ x = \text{sorok száma} / 65536, $$
-$$ 81,2*x + 156 = \text{puffer kiolvasási ideje}. $$ 
+$$ 81,2 \cdot x + 156 = \text{puffer kiolvasási ideje}. $$ 
 Az előzőhöz hasonlóan itt is egy memória darabot másolunk, ennek szorzásával megkapjuk mennyi időbe telne a kiolvasás más méretek esetén (\ref{fig:pufferout}. ábra).
 
 \begin{figure}[h!]
